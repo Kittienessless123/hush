@@ -1,0 +1,21 @@
+{
+  "title": "Chats",
+  "newChat": "New Chat",
+  "send": "Send",
+  "typeMessage": "Type a message...",
+  "attachFile": "Attach file",
+  "emoji": "Emoji",
+  "today": "Today",
+  "yesterday": "Yesterday",
+  "online": "online",
+  "offline": "offline",
+  "typing": "typing...",
+  "noMessages": "No messages yet",
+  "startChat": "Start a conversation",
+  "deleteChat": "Delete chat",
+  "clearHistory": "Clear history",
+  "searchChat": "Search chats",
+  "unreadMessages": "unread messages",
+  "lastSeenAt": "Last seen at {{time}}",
+  "messageDeleted": "This message was deleted"
+}

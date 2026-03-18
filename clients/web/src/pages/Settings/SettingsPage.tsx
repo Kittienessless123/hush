@@ -1,9 +1,10 @@
-import React from 'react'
+import React from "react";
+import { Settings } from "../../components/settings/Settings";
 
-type Props = {}
-
-export const SettingsPage = (props: Props) => {
+export const SettingsPage = () => {
   return (
-    <div>SettingsPage</div>
-  )
-}
+    <>
+      <Settings />
+    </>
+  );
+};

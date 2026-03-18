@@ -1,0 +1,16 @@
+{
+  "title": "My Profile",
+  "edit": "Edit Profile",
+  "save": "Save Changes",
+  "cancel": "Cancel",
+  "username": "Username",
+  "email": "Email",
+  "phone": "Phone",
+  "bio": "Bio",
+  "avatar": "Avatar",
+  "changeAvatar": "Change Avatar",
+  "deleteAvatar": "Delete Avatar",
+  "settings": "Profile Settings",
+  "lastSeen": "Last seen",
+  "memberSince": "Member since"
+}

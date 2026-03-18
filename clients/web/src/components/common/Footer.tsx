@@ -17,7 +17,7 @@ const items: MenuItem[] = [
       ></a>
     ),
     key: "Telegram",
-    icon: <Telegram />,
+
   },
   {
     label: (

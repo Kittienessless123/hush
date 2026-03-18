@@ -1,9 +1,15 @@
-import React from 'react'
+import React from "react";
+import { ChatHeader } from "../../components/chat/ChatHeader";
+import { MessageList } from "../../components/chat/MessageList";
+import { MessageInput } from "../../components/chat/MessageInput";
 
-type Props = {}
 
 export const ChatPage = () => {
   return (
-    <div>ChatPage</div>
-  )
-}
+    <>
+      <ChatHeader />
+      <MessageList />
+      <MessageInput />
+    </>
+  );
+};

@@ -1,0 +1,21 @@
+{
+  "title": "Чаты",
+  "newChat": "Новый чат",
+  "send": "Отправить",
+  "typeMessage": "Введите сообщение...",
+  "attachFile": "Прикрепить файл",
+  "emoji": "Смайлик",
+  "today": "Сегодня",
+  "yesterday": "Вчера",
+  "online": "в сети",
+  "offline": "не в сети",
+  "typing": "печатает...",
+  "noMessages": "Сообщений пока нет",
+  "startChat": "Начните диалог",
+  "deleteChat": "Удалить чат",
+  "clearHistory": "Очистить историю",
+  "searchChat": "Поиск чатов",
+  "unreadMessages": "непрочитанных сообщений",
+  "lastSeenAt": "Был(а) в {{time}}",
+  "messageDeleted": "Сообщение было удалено"
+}

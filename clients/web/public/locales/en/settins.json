@@ -1,0 +1,23 @@
+{
+  "title": "Settings",
+  "general": "General",
+  "notifications": "Notifications",
+  "privacy": "Privacy",
+  "security": "Security",
+  "language": "Language",
+  "theme": "Theme",
+  "darkMode": "Dark Mode",
+  "lightMode": "Light Mode",
+  "systemTheme": "System Theme",
+  "sound": "Sound",
+  "vibration": "Vibration",
+  "preview": "Message Preview",
+  "lastSeen": "Last Seen",
+  "readReceipts": "Read Receipts",
+  "blockedUsers": "Blocked Users",
+  "changePassword": "Change Password",
+  "twoFactor": "Two-Factor Authentication",
+  "sessions": "Active Sessions",
+  "logout": "Logout",
+  "deleteAccount": "Delete Account"
+}
