@@ -62,7 +62,34 @@ button:focus-visible {
   a:hover {
     color: #747bff;
   }
-  button {
+  button {/* Стили для дропдауна */
+.ant-dropdown-menu {
+  background-color: #2C2C2C !important;
+  border: 1px solid rgba(151,151,151,0.2) !important;
+  border-radius: 8px !important;
+  padding: 4px !important;
+}
+
+.ant-dropdown-menu-item {
+  color: #ffffff !important;
+  border-radius: 4px !important;
+  transition: all 0.3s ease !important;
+}
+
+.ant-dropdown-menu-item:hover {
+  background-color: #404040 !important;
+  color: #ffffff !important;
+}
+
+.ant-dropdown-menu-item-disabled {
+  color: rgba(151,151,151,0.5) !important;
+}
+
+.ant-dropdown-menu-item-divider {
+  background-color: rgba(151,151,151,0.2) !important;
+  margin: 4px 0 !important;
+}
     background-color: #f9f9f9;
   }
 }
+

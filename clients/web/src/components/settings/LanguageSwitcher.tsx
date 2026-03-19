@@ -1,10 +1,10 @@
 import { CheckOutlined, GlobalOutlined } from "@ant-design/icons";
-import { Button, Dropdown, Space, Typography } from "antd";
+import { Button, Dropdown, Space, Typography, Flex } from "antd";
 import { useTranslation } from "react-i18next";
-const { Text  } = Typography;
+const { Text } = Typography;
 
 export const LanguageSwitcher = () => {
-  const { i18n } = useTranslation();
+  const { i18n, t } = useTranslation("settings");
 
   const changeLanguage = (lng: string) => {
     i18n.changeLanguage(lng);
@@ -16,11 +16,9 @@ export const LanguageSwitcher = () => {
       label: (
         <Space>
           <span>🇬🇧</span>
-          <Text>English</Text>
+          <Text style={{ color: "#ffffff" }}>English</Text>
           {i18n.language === "en" && (
-            <span>
-              <CheckOutlined />
-            </span>
+            <CheckOutlined style={{ color: "#979797", fontSize: "14px" }} />
           )}
         </Space>
       ),
@@ -31,11 +29,9 @@ export const LanguageSwitcher = () => {
       label: (
         <Space>
           <span>🇷🇺</span>
-          <Text>Русский</Text>
+          <Text style={{ color: "#ffffff" }}>Русский</Text>
           {i18n.language === "ru" && (
-            <span>
-              <CheckOutlined />
-            </span>
+            <CheckOutlined style={{ color: "#979797", fontSize: "14px" }} />
           )}
         </Space>
       ),
@@ -44,10 +40,31 @@ export const LanguageSwitcher = () => {
   ];
 
   return (
-    <Dropdown menu={{ items }} placement="bottomRight" trigger={["click"]}>
-      <Button icon={<GlobalOutlined />}>
-        {i18n.language === "ru" ? "Русский" : "English"}
-      </Button>
-    </Dropdown>
+    <Flex align="center" justify="space-between" style={{ padding: "8px 0" }}>
+      <Text style={{ color: "#ffffff" }}>{t("language")}</Text>
+      <Dropdown 
+        menu={{ 
+          items,
+          style: { 
+            backgroundColor: "#2C2C2C", 
+            border: "1px solid rgba(151,151,151,0.2)",
+            borderRadius: "8px",
+          }
+        }} 
+        placement="bottomRight" 
+        trigger={["click"]}
+      >
+        <Button 
+          icon={<GlobalOutlined style={{ color: "#979797" }} />}
+          style={{
+            backgroundColor: "#2C2C2C",
+            border: "1px solid rgba(151,151,151,0.2)",
+            color: "#ffffff",
+          }}
+        >
+          {i18n.language === "ru" ? "Русский" : "English"}
+        </Button>
+      </Dropdown>
+    </Flex>
   );
 };

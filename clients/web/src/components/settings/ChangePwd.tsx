@@ -1,51 +1,109 @@
-import { Button, Flex, Form, Input, Typography, type FormProps } from "antd";
-const { Title } = Typography;
-
-type FieldType = {
-  oldPassword?: string;
-  newPassword?: string;
-};
-
-const onFinish: FormProps<FieldType>["onFinish"] = (values) => {
-  console.log("Success:", values);
-};
-
-const onFinishFailed: FormProps<FieldType>["onFinishFailed"] = (errorInfo) => {
-  console.log("Failed:", errorInfo);
-};
+import { Button, Flex, Form, Input,  message } from "antd";
+import { useState } from "react";
 
 export const ChangePwd = () => {
+  const [form] = Form.useForm();
+  const [loading, setLoading] = useState(false);
+
+  const onFinish = () => {
+    setLoading(true);
+    setTimeout(() => {
+      message.success("Пароль успешно изменен");
+      form.resetFields();
+      setLoading(false);
+    }, 1000);
+  };
+
   return (
-    <Flex vertical gap={"middle"}>
-      <Title>Change password</Title>
+    <Flex vertical style={{ padding: "24px 20px" }}>
       <Form
-        name="basic"
-        labelCol={{ span: 8 }}
-        wrapperCol={{ span: 16 }}
-        style={{ maxWidth: 600 }}
-        initialValues={{ remember: true }}
+        form={form}
+        layout="vertical"
         onFinish={onFinish}
-        onFinishFailed={onFinishFailed}
         autoComplete="off"
       >
-        <Form.Item<FieldType>
-          label="Password"
+        <Form.Item
+          label={<span style={{ color: "#ffffff" }}>Старый пароль</span>}
           name="oldPassword"
-          rules={[{ required: true, message: "Please input your password!" }]}
+          rules={[{ required: true, message: "Введите старый пароль" }]}
         >
-          <Input.Password />
-        </Form.Item>
-        <Form.Item<FieldType>
-          label="Password"
-          name="newPassword"
-          rules={[{ required: true, message: "Please input your password!" }]}
-        >
-          <Input.Password />
+          <Input.Password 
+            style={{
+              backgroundColor: "#2C2C2C",
+              border: "1px solid rgba(151,151,151,0.2)",
+              color: "#ffffff",
+              padding: "8px 12px",
+            }}
+          />
         </Form.Item>
 
-        <Form.Item label={null}>
-          <Button type="primary" htmlType="submit">
-            Submit
+        <Form.Item
+          label={<span style={{ color: "#ffffff" }}>Новый пароль</span>}
+          name="newPassword"
+          rules={[
+            { required: true, message: "Введите новый пароль" },
+            { min: 6, message: "Минимум 6 символов" }
+          ]}
+        >
+          <Input.Password 
+            style={{
+              backgroundColor: "#2C2C2C",
+              border: "1px solid rgba(151,151,151,0.2)",
+              color: "#ffffff",
+              padding: "8px 12px",
+            }}
+          />
+        </Form.Item>
+
+        <Form.Item
+          label={<span style={{ color: "#ffffff" }}>Подтвердите пароль</span>}
+          name="confirmPassword"
+          dependencies={['newPassword']}
+          rules={[
+            { required: true, message: "Подтвердите пароль" },
+            ({ getFieldValue }) => ({
+              validator(_, value) {
+                if (!value || getFieldValue('newPassword') === value) {
+                  return Promise.resolve();
+                }
+                return Promise.reject(new Error("Пароли не совпадают"));
+              },
+            }),
+          ]}
+        >
+          <Input.Password 
+            style={{
+              backgroundColor: "#2C2C2C",
+              border: "1px solid rgba(151,151,151,0.2)",
+              color: "#ffffff",
+              padding: "8px 12px",
+            }}
+          />
+        </Form.Item>
+
+        <Form.Item>
+          <Button 
+            type="primary" 
+            htmlType="submit"
+            loading={loading}
+            style={{
+              width: "100%",
+              height: "44px",
+              backgroundColor: "#2C2C2C",
+              border: "1px solid rgba(151,151,151,0.3)",
+              color: "#ffffff",
+              boxShadow: "0 0 15px rgba(151,151,151,0.2)",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = "#3C3C3C";
+              e.currentTarget.style.boxShadow = "0 0 25px rgba(151,151,151,0.4)";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = "#2C2C2C";
+              e.currentTarget.style.boxShadow = "0 0 15px rgba(151,151,151,0.2)";
+            }}
+          >
+            Изменить пароль
           </Button>
         </Form.Item>
       </Form>

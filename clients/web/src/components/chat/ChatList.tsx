@@ -28,7 +28,7 @@ const mockChats = [
 
 export const ChatList = () => {
   return (
-    <Flex vertical gap="small" style={{ padding: "16px" }}>
+    <Flex vertical>
       {mockChats.map((chat) => (
         <ChatItem
           key={chat.id}

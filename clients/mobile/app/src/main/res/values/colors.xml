@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Ant Design Colors -->
+    <color name="primary">#1890FF</color>        <!-- AntD Blue -->
+    <color name="primary_dark">#096DD9</color>    <!-- Hover/Active -->
+    <color name="success">#52C41A</color>         <!-- Green -->
+    <color name="warning">#FAAD14</color>         <!-- Yellow -->
+    <color name="error">#F5222D</color>           <!-- Red -->
+
+    <!-- Neutral Colors -->
+    <color name="text_primary">#000000D9</color>  <!-- 85% black -->
+    <color name="text_secondary">#00000073</color> <!-- 45% black -->
+    <color name="text_disabled">#00000040</color>  <!-- 25% black -->
+    <color name="border">#F0F0F0</color>          <!-- Light gray -->
+    <color name="background">#FFFFFF</color>       <!-- White -->
+</resources>
