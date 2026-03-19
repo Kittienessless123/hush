@@ -1,9 +1,16 @@
-import React from 'react'
+import { DeleteOutlined } from "@ant-design/icons";
+import { Button, Flex, Typography } from "antd";
+const { Title } = Typography;
 
-type Props = {}
+export const DeleteAcc = () => {
+  const onDeleteAccount = () => {
+    throw new Error("Function not implemented.");
+  };
 
-export const DeleteAcc = (props: Props) => {
   return (
-    <div>DeleteAcc</div>
-  )
-}
+    <Flex gap={"middle"}>
+      <Title>Delete acc</Title>
+      <Button onClick={onDeleteAccount} icon={<DeleteOutlined />}></Button>
+    </Flex>
+  );
+};

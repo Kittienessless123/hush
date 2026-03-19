@@ -1,6 +1,5 @@
 import { UserOutlined, WechatFilled } from "@ant-design/icons";
 import { Avatar, Button, Flex, Typography } from "antd";
-import React from "react";
 const { Title, Text } = Typography;
 
 interface FriendsProps {
@@ -8,7 +7,7 @@ interface FriendsProps {
   name: string;
 }
 
-export const FriendItem = ({ id, name }: FriendsProps) => {
+export const FriendItem = ({  name }: FriendsProps) => {
   return (
     <Flex>
       <Avatar size="medium" icon={<UserOutlined />} />

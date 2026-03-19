@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 
 import { Flex, Input } from "antd";
 import { PlusCircleOutlined, SmileOutlined } from "@ant-design/icons";

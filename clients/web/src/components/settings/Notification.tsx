@@ -1,8 +1,5 @@
-import React from 'react'
 
-type Props = {}
-
-export const Notification = (props: Props) => {
+export const Notification = () => {
   return (
     <div>Notification</div>
   )

@@ -1,0 +1,142 @@
+# Версия формата docker-compose (3.8 - современная версия)
+version: '3.8'
+
+# Сети - изолированное окружение для контейнеров
+networks:
+  hush-network:
+    driver: bridge  # bridge - стандартная сеть для взаимодействия контейнеров
+
+# Тома - постоянное хранилище данных
+volumes:
+  postgres_data:  # Данные PostgreSQL будут сохранены даже после перезапуска
+    driver: local
+  uploads:        # Загруженные пользователями файлы
+    driver: local
+
+# Сервисы - наши контейнеры
+services:
+  # ===== БАЗА ДАННЫХ =====
+  db:
+    # Используем официальный PostgreSQL
+    image: postgres:15-alpine
+    container_name: hush-db  # Имя контейнера для удобства
+    
+    # Автоматически перезапускать, если упал (кроме случая, когда остановили руками)
+    restart: unless-stopped
+    
+    # Переменные окружения для PostgreSQL
+    environment:
+      POSTGRES_DB: ${DB_NAME:-hush}                # Имя БД (из .env или 'hush')
+      POSTGRES_USER: ${DB_USER:-hush}              # Пользователь БД
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-hush123}   # Пароль (менять в продакшене!)
+      POSTGRES_HOST_AUTH_METHOD: trust              # Для разработки - без пароля
+    
+    # Проброс порта: хост:контейнер
+    # 5432 стандартный порт PostgreSQL
+    ports:
+      - "5432:5432"
+    
+    # Тома для постоянного хранения данных
+    volumes:
+      - postgres_data:/var/lib/postgresql/data  # Данные БД
+      - ./docker/postgres/init:/docker-entrypoint-initdb.d  # Скрипты инициализации
+    
+    # Подключаем к нашей сети
+    networks:
+      - hush-network
+    
+    # Healthcheck - проверка, что БД действительно готова
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-hush} -d ${DB_NAME:-hush}"]
+      interval: 10s   # Проверять каждые 10 секунд
+      timeout: 5s     # Ждать ответа 5 секунд
+      retries: 5      # 5 неудачных попыток = контейнер не здоров
+
+  # ===== БЭКЕНД =====
+  server:
+    # Собираем из Dockerfile в папке ./server
+    build:
+      context: ./server      # Контекст сборки (откуда копировать файлы)
+      dockerfile: Dockerfile # Имя Dockerfile
+    
+    container_name: hush-server
+    ports:
+      - "3000:3000"
+    restart: unless-stopped
+    env_file:
+      - ./server/.env
+    # Переменные окружения для приложения
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://hush:hush123@db:5432/hush?schema=public
+      PORT: 3000
+      CLIENT_URL: https://hush.local
+      JWT_SECRET: ${JWT_SECRET:-super-secret-jwt-key-change-in-production}
+    
+    # Ждем, пока БД будет готова (по healthcheck)
+    depends_on:
+      db:
+        condition: service_healthy
+    
+    networks:
+      - hush-network
+    
+    # Тома для разработки (опционально, для hot-reload)
+    # В продакшене лучше закомментировать
+    # volumes:
+    #   - ./server:/app          # Монтируем код для hot-reload
+    #   - /app/node_modules      # Не перезаписывать node_modules из контейнера
+
+  # ===== ФРОНТЕНД =====
+  web:
+    build:
+      context: ./clients/web
+      dockerfile: Dockerfile
+    
+    container_name: hush-web
+    
+    restart: unless-stopped
+    
+    # Переменные для фронта (будут встроены в сборку)
+    environment:
+      VITE_API_URL: https://hush.local/api
+      VITE_WS_URL: wss://hush.local
+    
+    networks:
+      - hush-network
+    
+    depends_on:
+      - server  # Просто ждем, пока сервер запустится
+
+  # ===== NGINX (REVERSE PROXY) =====
+  nginx:
+    # Собираем из папки ./nginx
+    build:
+      context: ./nginx
+      dockerfile: Dockerfile
+    
+    container_name: hush-nginx
+    
+    restart: unless-stopped
+    
+    # Публикуем порты на хост-машине
+    ports:
+      - "8080:80"      # HTTP
+      - "8443:443"    # HTTPS
+    
+    volumes:
+      # Монтируем конфиг для возможности менять без пересборки
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro  # ro = read-only
+      
+      # SSL сертификаты (создадим локально для разработки)
+      - ./ssl:/etc/nginx/ssl:ro
+      
+      # Общий том для загруженных файлов (чтобы Nginx мог их раздавать)
+      - uploads:/var/www/uploads:ro
+    
+    networks:
+      - hush-network
+    
+    depends_on:
+      - server
+      - web

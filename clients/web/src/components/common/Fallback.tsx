@@ -1,4 +1,3 @@
-import React from 'react';
 import { Flex,  Result } from 'antd';
 import { LoadingOutlined } from '@ant-design/icons';
 

@@ -1,9 +1,10 @@
 import { Button, Space, Typography } from "antd";
 import { Flex } from "antd";
+import { observer } from "mobx-react-lite";
 const { Title } = Typography;
 import { useNavigate } from "react-router-dom";
 
-export const Home = () => {
+export const Home = observer(() => {
   const navigate = useNavigate();
 
   const RegisterHelper = () => {
@@ -24,4 +25,4 @@ export const Home = () => {
       </Flex>
     </Flex>
   );
-};
+})

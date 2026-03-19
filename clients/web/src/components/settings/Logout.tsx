@@ -1,9 +1,13 @@
-import React from 'react'
+import { LogoutOutlined } from "@ant-design/icons";
+import { Button, Flex, Typography } from "antd";
+const { Title } = Typography;
 
-type Props = {}
-
-export const Logout = (props: Props) => {
+export const Logout = () => {
+  const onLogout = () => {};
   return (
-    <div>Logout</div>
-  )
-}
+    <Flex gap={"middle"}>
+      <Title>Logout</Title>
+      <Button onClick={onLogout} icon={<LogoutOutlined />}></Button>;
+    </Flex>
+  );
+};

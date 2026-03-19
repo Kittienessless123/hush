@@ -1,8 +1,6 @@
-import React from 'react'
 
-type Props = {}
 
-export const ReadReceipts = (props: Props) => {
+export const ReadReceipts = () => {
   return (
     <div>ReadReceipts</div>
   )

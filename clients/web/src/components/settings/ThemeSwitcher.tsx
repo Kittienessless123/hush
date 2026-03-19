@@ -1,8 +1,5 @@
-import React from 'react'
 
-type Props = {}
-
-export const ThemeSwitcher = (props: Props) => {
+export const ThemeSwitcher = () => {
   return (
     <div>ThemeSwitcher</div>
   )

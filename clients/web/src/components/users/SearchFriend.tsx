@@ -1,8 +1,5 @@
-import React from 'react'
 
-type Props = {}
-
-export const SearchFriend = (props: Props) => {
+export const SearchFriend = () => {
   return (
     <div>SearchFriend</div>
   )

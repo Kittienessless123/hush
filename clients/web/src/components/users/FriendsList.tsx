@@ -1,4 +1,3 @@
-import React from "react";
 import { FriendItem } from "./FriendItem";
 import { Flex } from "antd";
 

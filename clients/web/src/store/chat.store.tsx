@@ -1,4 +1,4 @@
-import { makeAutoObservable, runInAction } from 'mobx';
+/* import { makeAutoObservable, runInAction } from 'mobx';
 import type { Message, Chat } from '../types/api.types';
 import { MessageService } from '../services/api/messages.api';
 import { messageSocket } from '../services/websocket/messages.socket';
@@ -166,4 +166,4 @@ export class ChatStore {
     }
     return `${typing.size} человек печатают...`;
   }
-}
+} */

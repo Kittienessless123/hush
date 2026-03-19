@@ -1,9 +1,15 @@
-import React from 'react'
+import { Flex, Typography, Switch } from "antd";
+const { Title } = Typography;
 
-type Props = {}
+export const LastSeen = () => {
+  const onChange = (checked: boolean) => {
+    console.log(`switch to ${checked}`);
+  };
 
-export const LastSeen = (props: Props) => {
   return (
-    <div>LastSeen</div>
-  )
-}
+    <Flex gap={"middle"}>
+      <Title>Show last seen</Title>
+      <Switch  size="small"  onChange={onChange} />;
+    </Flex>
+  );
+};

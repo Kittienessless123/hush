@@ -1,8 +1,6 @@
-import React from 'react'
 
-type Props = {}
 
-const ChatInfo = (props: Props) => {
+export const ChatInfo = () => {
   return (
     <div>ChatInfo</div>
   )

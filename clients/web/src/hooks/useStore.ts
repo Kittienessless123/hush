@@ -11,4 +11,3 @@ export const useStore = (): RootStore => {
 
 // Для удобства можно создать отдельные хуки
 export const useAuthStore = () => useStore().authStore;
-export const useChatStore = () => useStore().chatStore;
