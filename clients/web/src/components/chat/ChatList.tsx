@@ -1,8 +1,17 @@
-import { Flex } from "antd";
+import { Flex, Empty } from "antd";
 import { ChatItem } from "./ChatItem";
+import { useTheme } from "../../hooks/useTheme";
+import { useTranslation } from "react-i18next";
 
-// Массив-заглушка с тремя элементами
-const mockChats = [
+interface Chat {
+  id: string;
+  name: string;
+  lastSeen: string;
+  lastMessage: string;
+  unreadCount: number;
+}
+
+const mockChats: Chat[] = [
   {
     id: "1",
     name: "Анна Петрова",
@@ -26,10 +35,30 @@ const mockChats = [
   },
 ];
 
-export const ChatList = () => {
+interface ChatListProps {
+  chats?: Chat[];
+
+}
+
+export const ChatList = ({ chats = mockChats }: ChatListProps) => {
+  const { theme } = useTheme();
+  const { t } = useTranslation("chat");
+
+  if (chats.length === 0) {
+    return (
+      <Empty 
+        description={t("noChats") || "Нет чатов"}
+        style={{ 
+          color: theme.textSecondary, 
+          marginTop: "50px" 
+        }}
+      />
+    );
+  }
+
   return (
     <Flex vertical>
-      {mockChats.map((chat) => (
+      {chats.map((chat) => (
         <ChatItem
           key={chat.id}
           id={chat.id}

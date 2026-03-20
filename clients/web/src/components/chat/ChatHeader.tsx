@@ -1,4 +1,5 @@
-import { DownOutlined, UserOutlined } from "@ant-design/icons";
+// components/chat/ChatHeader.tsx
+import { DownOutlined, UserOutlined, SearchOutlined, ArrowLeftOutlined } from "@ant-design/icons";
 import {
   Avatar,
   Dropdown,
@@ -6,37 +7,98 @@ import {
   Space,
   Typography,
   Input,
+  Modal,
   type MenuProps,
 } from "antd";
-//import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useTheme } from "../../hooks/useTheme";
 
 const { Title, Text } = Typography;
 const { Search } = Input;
 
 interface ChatHeaderProps {
   onAvatarClick?: () => void;
+  onSearch?: (value: string) => void;
+  onClearChat?: () => void;
+  onBlockChat?: () => void;
+  onDeleteChat?: () => void;
+  chatName?: string;
+  chatStatus?: string;
+  showBackButton?: boolean;
 }
 
-export const ChatHeader = ({ onAvatarClick }: ChatHeaderProps) => {
- // const navigate = useNavigate();
+export const ChatHeader = ({ 
+  onAvatarClick, 
+  onSearch,
+  onClearChat,
+  onBlockChat,
+  onDeleteChat,
+  chatName = "Анна Петрова",
+  chatStatus = "был(а) 5 минут назад",
+  showBackButton = false,
+}: ChatHeaderProps) => {
+  const { t } = useTranslation("chat");
+  const { theme } = useTheme();
+  const navigate = useNavigate();
+  const [searchMode, setSearchMode] = useState(false);
+  const [searchValue, setSearchValue] = useState("");
+
+  const handleSearch = (value: string) => {
+    onSearch?.(value);
+  };
 
   const items: MenuProps["items"] = [
     {
-      label: "Информация о чате",
-      key: "0",
+      label: t("chatInfo"),
+      key: "info",
       onClick: onAvatarClick,
     },
     {
-      label: "Поиск",
-      key: "1",
+      label: t("search"),
+      key: "search",
+      icon: <SearchOutlined />,
+      onClick: () => setSearchMode(!searchMode),
     },
     {
-      type: "divider",
+      type: "divider" as const,
     },
     {
-      label: "Очистить историю",
-      key: "3",
+      label: t("clearHistory"),
+      key: "clear",
       danger: true,
+      onClick: () => {
+        Modal.confirm({
+          title: t("clearHistoryConfirm"),
+          content: t("clearHistoryConfirmMessage"),
+          onOk: onClearChat,
+        });
+      },
+    },
+    {
+      label: t("blockUser"),
+      key: "block",
+      danger: true,
+      onClick: () => {
+        Modal.confirm({
+          title: t("blockUserConfirm"),
+          content: t("blockUserConfirmMessage"),
+          onOk: onBlockChat,
+        });
+      },
+    },
+    {
+      label: t("deleteChat"),
+      key: "delete",
+      danger: true,
+      onClick: () => {
+        Modal.confirm({
+          title: t("deleteChatConfirm"),
+          content: t("deleteChatConfirmMessage"),
+          onOk: onDeleteChat,
+        });
+      },
     },
   ];
 
@@ -46,43 +108,62 @@ export const ChatHeader = ({ onAvatarClick }: ChatHeaderProps) => {
       justify="space-between" 
       style={{ 
         padding: "12px 20px",
-        borderBottom: "1px solid rgba(151,151,151,0.2)",
-        backgroundColor: "#1C1C1C",
+        borderBottom: `1px solid ${theme.divider}`,
+        backgroundColor: theme.background,
       }}
     >
       <Flex align="center" gap="middle">
+        {showBackButton && (
+          <ArrowLeftOutlined 
+            style={{ 
+              color: theme.textSecondary, 
+              fontSize: "20px", 
+              cursor: "pointer" 
+            }} 
+            onClick={() => navigate("/chats")}
+          />
+        )}
         <Avatar 
           size={44} 
           icon={<UserOutlined />} 
           onClick={onAvatarClick}
           style={{ 
             cursor: "pointer",
-            backgroundColor: "#2C2C2C",
-            color: "#979797",
-            border: "2px solid rgba(151,151,151,0.3)",
+            backgroundColor: theme.surface,
+            color: theme.textSecondary,
+            border: `2px solid ${theme.border}`,
           }}
         />
         <Flex vertical>
-          <Title level={4} style={{ margin: 0, color: "#ffffff" }}>
-            Анна Петрова
+          <Title level={4} style={{ margin: 0, color: theme.text }}>
+            {chatName}
           </Title>
-          <Text style={{ color: "#979797", fontSize: "13px" }}>
-            был(а) 5 минут назад
+          <Text style={{ color: theme.textSecondary, fontSize: "13px" }}>
+            {chatStatus}
           </Text>
         </Flex>
       </Flex>
 
       <Flex align="center" gap="small">
-        <Search
-          placeholder="Поиск"
-          style={{ width: 200 }}
-          onSearch={(value) => console.log(value)}
-        />
+        {searchMode && (
+          <Search
+            placeholder={t("searchInChat")}
+            value={searchValue}
+            onChange={(e) => setSearchValue(e.target.value)}
+            onSearch={handleSearch}
+            style={{ 
+              width: 200,
+              backgroundColor: theme.surface,
+              borderColor: theme.border,
+            }}
+            autoFocus
+          />
+        )}
         <Dropdown 
           menu={{ items }} 
           trigger={['click']}
         >
-          <a onClick={(e) => e.preventDefault()} style={{ color: "#979797" }}>
+          <a onClick={(e) => e.preventDefault()} style={{ color: theme.textSecondary }}>
             <Space>
               <DownOutlined />
             </Space>

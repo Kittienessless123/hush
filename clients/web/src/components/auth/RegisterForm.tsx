@@ -1,8 +1,21 @@
+// components/auth/RegisterForm.tsx
 import { Button, Form, Input, Select, Typography, message } from "antd";
 import { observer } from "mobx-react-lite";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
+import { useTheme } from "../../hooks/useTheme"  ;
+import { getFormContainer, getFormCard } from "../../styles/containers";
+import { getFormTitleStyle } from "../../styles/typography";
+import { 
+  getInputStyle, 
+  getLabelStyle, 
+  getButtonStyle, 
+  getSelectStyle,
+  inputFocusStyles, 
+  buttonHoverStyles,
+  getSelectDropdownStyles 
+} from "../../styles/forms";
 
 const { Title } = Typography;
 
@@ -15,74 +28,10 @@ type FieldType = {
   customizeGender?: string;
 };
 
-const formContainerStyle: React.CSSProperties = {
-  display: "flex",
-  justifyContent: "center",
-  alignItems: "center",
-  minHeight: "calc(100vh - 70px)",
-  backgroundColor: "#1C1C1C",
-  padding: "20px",
-};
-
-const formCardStyle: React.CSSProperties = {
-  backgroundColor: "transparent",
-  padding: "40px",
-  borderRadius: "16px",
-  width: "100%",
-  maxWidth: "500px",
-  border: "1px solid rgba(151,151,151,0.3)",
-  boxShadow: "0 0 30px rgba(151,151,151,0.15)",
-  backdropFilter: "blur(10px)",
-};
-
-const titleStyle: React.CSSProperties = {
-  textAlign: "center",
-  color: "#979797",
-  marginBottom: "32px",
-  fontSize: "32px",
-  fontWeight: 400,
-  fontFamily: "'Six Caps', sans-serif",
-  letterSpacing: "2px",
-  textTransform: "uppercase",
-};
-
-const inputStyle: React.CSSProperties = {
-  backgroundColor: "transparent",
-  border: "1px solid rgba(151,151,151,0.3)",
-  borderRadius: "8px",
-  padding: "12px",
-  color: "#ffffff",
-  fontSize: "16px",
-};
-
-const selectStyle: React.CSSProperties = {
-  backgroundColor: "transparent",
-  borderRadius: "8px",
-};
-
-const buttonStyle: React.CSSProperties = {
-  width: "100%",
-  height: "48px",
-  fontSize: "18px",
-  fontWeight: 500,
-  background: "#2C2C2C",
-  color: "#ffffff",
-  border: "1px solid rgba(151,151,151,0.3)",
-  boxShadow: "0 0 15px rgba(151,151,151,0.2)",
-  borderRadius: "8px",
-  transition: "all 0.3s ease",
-};
-
-const labelStyle: React.CSSProperties = {
-  color: "#979797",
-  fontSize: "16px",
-  fontWeight: 400,
-};
-
 export const RegisterForm = observer(() => {
   const { t } = useTranslation("system");
   const navigate = useNavigate();
-  // const { register } = useAuthStore();
+  const { theme } = useTheme();
   const [loading, setLoading] = useState(false);
   const [form] = Form.useForm();
 
@@ -104,21 +53,12 @@ export const RegisterForm = observer(() => {
   const onFinish = async (values: FieldType) => {
     setLoading(true);
     try {
-      // Здесь ваш реальный API вызов для регистрации
-      // await register(values);
-
       console.log("Success:", values);
       message.success(t("registerSuccess"));
-
-      // Перенаправление после успешной регистрации
-      setTimeout(() => {
-        navigate("/login");
-      }, 1000);
+      setTimeout(() => navigate("/login"), 1000);
     } catch (error) {
       console.error("Register error:", error);
       message.error(t("registerError"));
-
-      // Очистка полей пароля при ошибке
       form.setFieldsValue({
         password: "",
         confirmPassword: "",
@@ -128,15 +68,32 @@ export const RegisterForm = observer(() => {
     }
   };
 
-  const onFinishFailed = (errorInfo: unknown) => {
-    console.log("Failed:", errorInfo);
-    message.warning(t("pleaseCheckForm"));
+  const handleFocus = (e: React.FocusEvent<HTMLInputElement>) => {
+    const styles = inputFocusStyles(theme);
+    e.currentTarget.style.boxShadow = styles.boxShadow;
+    e.currentTarget.style.borderColor = styles.borderColor;
+  };
+
+  const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+    e.currentTarget.style.boxShadow = 'none';
+    e.currentTarget.style.borderColor = theme.border;
+  };
+
+  const handleMouseEnter = (e: React.MouseEvent<HTMLElement>) => {
+    const styles = buttonHoverStyles(theme);
+    e.currentTarget.style.boxShadow = styles.boxShadow;
+    e.currentTarget.style.background = styles.background;
+  };
+
+  const handleMouseLeave = (e: React.MouseEvent<HTMLElement>) => {
+    e.currentTarget.style.boxShadow = `0 0 15px ${theme.glow}`;
+    e.currentTarget.style.background = theme.surface;
   };
 
   return (
-    <div style={formContainerStyle}>
-      <div style={formCardStyle}>
-        <Title level={2} style={titleStyle}>
+    <div style={getFormContainer(theme)}>
+      <div style={{ ...getFormCard(theme), maxWidth: '500px' }}>
+        <Title level={2} style={getFormTitleStyle(theme)}>
           {t("registerTitle")}
         </Title>
 
@@ -145,12 +102,11 @@ export const RegisterForm = observer(() => {
           name="register-form"
           layout="vertical"
           onFinish={onFinish}
-          onFinishFailed={onFinishFailed}
           autoComplete="off"
           size="large"
         >
           <Form.Item
-            label={<span style={labelStyle}>{t("username")}</span>}
+            label={<span style={getLabelStyle(theme)}>{t("username")}</span>}
             name="username"
             rules={[
               { required: true, message: t("usernameRequired") },
@@ -158,22 +114,15 @@ export const RegisterForm = observer(() => {
             ]}
           >
             <Input
-              style={inputStyle}
+              style={getInputStyle(theme)}
               placeholder={t("username")}
-              onFocus={(e) => {
-                e.currentTarget.style.boxShadow =
-                  "0 0 20px rgba(151,151,151,0.4)";
-                e.currentTarget.style.borderColor = "#979797";
-              }}
-              onBlur={(e) => {
-                e.currentTarget.style.boxShadow = "none";
-                e.currentTarget.style.borderColor = "rgba(151,151,151,0.3)";
-              }}
+              onFocus={handleFocus}
+              onBlur={handleBlur}
             />
           </Form.Item>
 
           <Form.Item
-            label={<span style={labelStyle}>{t("password")}</span>}
+            label={<span style={getLabelStyle(theme)}>{t("password")}</span>}
             name="password"
             rules={[
               { required: true, message: t("passwordRequired") },
@@ -181,22 +130,15 @@ export const RegisterForm = observer(() => {
             ]}
           >
             <Input.Password
-              style={inputStyle}
+              style={getInputStyle(theme)}
               placeholder={t("password")}
-              onFocus={(e) => {
-                e.currentTarget.style.boxShadow =
-                  "0 0 20px rgba(151,151,151,0.4)";
-                e.currentTarget.style.borderColor = "#979797";
-              }}
-              onBlur={(e) => {
-                e.currentTarget.style.boxShadow = "none";
-                e.currentTarget.style.borderColor = "rgba(151,151,151,0.3)";
-              }}
+              onFocus={handleFocus}
+              onBlur={handleBlur}
             />
           </Form.Item>
 
           <Form.Item
-            label={<span style={labelStyle}>{t("confirmPassword")}</span>}
+            label={<span style={getLabelStyle(theme)}>{t("confirmPassword")}</span>}
             name="confirmPassword"
             dependencies={["password"]}
             rules={[
@@ -212,42 +154,28 @@ export const RegisterForm = observer(() => {
             ]}
           >
             <Input.Password
-              style={inputStyle}
+              style={getInputStyle(theme)}
               placeholder={t("confirmPassword")}
-              onFocus={(e) => {
-                e.currentTarget.style.boxShadow =
-                  "0 0 20px rgba(151,151,151,0.4)";
-                e.currentTarget.style.borderColor = "#979797";
-              }}
-              onBlur={(e) => {
-                e.currentTarget.style.boxShadow = "none";
-                e.currentTarget.style.borderColor = "rgba(151,151,151,0.3)";
-              }}
+              onFocus={handleFocus}
+              onBlur={handleBlur}
             />
           </Form.Item>
 
           <Form.Item
-            label={<span style={labelStyle}>{t("note")}</span>}
+            label={<span style={getLabelStyle(theme)}>{t("note")}</span>}
             name="note"
             rules={[{ required: true, message: t("noteRequired") }]}
           >
             <Input
-              style={inputStyle}
+              style={getInputStyle(theme)}
               placeholder={t("note")}
-              onFocus={(e) => {
-                e.currentTarget.style.boxShadow =
-                  "0 0 20px rgba(151,151,151,0.4)";
-                e.currentTarget.style.borderColor = "#979797";
-              }}
-              onBlur={(e) => {
-                e.currentTarget.style.boxShadow = "none";
-                e.currentTarget.style.borderColor = "rgba(151,151,151,0.3)";
-              }}
+              onFocus={handleFocus}
+              onBlur={handleBlur}
             />
           </Form.Item>
 
           <Form.Item
-            label={<span style={labelStyle}>{t("gender")}</span>}
+            label={<span style={getLabelStyle(theme)}>{t("gender")}</span>}
             name="gender"
             rules={[{ required: true, message: t("genderRequired") }]}
           >
@@ -255,7 +183,7 @@ export const RegisterForm = observer(() => {
               popupClassName="custom-select-dropdown"
               placeholder={t("selectGender")}
               onChange={onGenderChange}
-              style={selectStyle}
+              style={getSelectStyle(theme)}
               options={[
                 { label: t("male"), value: "male" },
                 { label: t("female"), value: "female" },
@@ -273,25 +201,17 @@ export const RegisterForm = observer(() => {
             {({ getFieldValue }) =>
               getFieldValue("gender") === "other" ? (
                 <Form.Item
-                  label={<span style={labelStyle}>{t("customizeGender")}</span>}
+                  label={<span style={getLabelStyle(theme)}>{t("customizeGender")}</span>}
                   name="customizeGender"
                   rules={[
                     { required: true, message: t("customizeGenderRequired") },
                   ]}
                 >
                   <Input
-                    style={inputStyle}
+                    style={getInputStyle(theme)}
                     placeholder={t("customizeGender")}
-                    onFocus={(e) => {
-                      e.currentTarget.style.boxShadow =
-                        "0 0 20px rgba(151,151,151,0.4)";
-                      e.currentTarget.style.borderColor = "#979797";
-                    }}
-                    onBlur={(e) => {
-                      e.currentTarget.style.boxShadow = "none";
-                      e.currentTarget.style.borderColor =
-                        "rgba(151,151,151,0.3)";
-                    }}
+                    onFocus={handleFocus}
+                    onBlur={handleBlur}
                   />
                 </Form.Item>
               ) : null
@@ -302,18 +222,10 @@ export const RegisterForm = observer(() => {
             <Button
               type="primary"
               htmlType="submit"
-              style={buttonStyle}
+              style={getButtonStyle(theme)}
               loading={loading}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.boxShadow =
-                  "0 0 25px rgba(151,151,151,0.6)";
-                e.currentTarget.style.background = "#3C3C3C";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.boxShadow =
-                  "0 0 15px rgba(151,151,151,0.2)";
-                e.currentTarget.style.background = "#2C2C2C";
-              }}
+              onMouseEnter={handleMouseEnter}
+              onMouseLeave={handleMouseLeave}
             >
               {t("register")}
             </Button>
@@ -321,30 +233,7 @@ export const RegisterForm = observer(() => {
         </Form>
       </div>
 
-      
-      
-      <style>{`
-  .custom-select-dropdown .ant-select-item {
-    background-color: #2C2C2C;
-    color: #ffffff;
-    transition: all 0.3s ease;
-    border: none;
-    margin: 0;
-    padding: 8px 12px;
-  }
-  .custom-select-dropdown .ant-select-item:hover {
-    background-color: #404040 !important;
-    color: #ffffff !important;
-  }
-  .custom-select-dropdown .ant-select-item-option-selected {
-    background-color: #3C3C3C !important;
-    color: #ffffff !important;
-  }
-  .custom-select-dropdown .ant-select-item-option-active {
-    background-color: #404040 !important;
-    color: #ffffff !important;
-  }
-`}</style>
+      <style>{getSelectDropdownStyles(theme)}</style>
     </div>
   );
 });

@@ -1,0 +1,21 @@
+{
+  "profile": "Profile",
+  "editProfile": "Redact profile",
+  "name": "Name",
+  "status": "Status",
+  "birthday": "Birthdate",
+  "friends": "friends",
+  "save": "Save",
+  "cancel": "Cancel",
+  "avatarChanged": "Avatar changed",
+  "profileUpdated": "Profile updated",
+  "searchFriends": "Search friends",
+  "noFriends": "No friends",
+   "nameAsc": "Name (A-Z)",
+  "nameDesc": "Name (Z-A)",
+  "dateAsc": "Date added (old first)",
+  "dateDesc": "Date added (new first)",
+  "of": "of",
+  "added": "Added",
+  "online": "Online"
+}

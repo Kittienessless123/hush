@@ -1,70 +1,39 @@
-import { CheckOutlined, GlobalOutlined } from "@ant-design/icons";
-import { Button, Dropdown, Space, Typography, Flex } from "antd";
+// components/settings/LanguageSwitcher.tsx
+import { Flex, Select, Typography } from "antd";
 import { useTranslation } from "react-i18next";
+import { useTheme } from "../../hooks/useTheme";
+import { getLabelStyle } from "../../styles/forms";
+
 const { Text } = Typography;
 
 export const LanguageSwitcher = () => {
-  const { i18n, t } = useTranslation("settings");
+  const { t, i18n } = useTranslation("settings");
+  const { theme } = useTheme();
 
-  const changeLanguage = (lng: string) => {
-    i18n.changeLanguage(lng);
-  };
-
-  const items = [
-    {
-      key: "en",
-      label: (
-        <Space>
-          <span>🇬🇧</span>
-          <Text style={{ color: "#ffffff" }}>English</Text>
-          {i18n.language === "en" && (
-            <CheckOutlined style={{ color: "#979797", fontSize: "14px" }} />
-          )}
-        </Space>
-      ),
-      onClick: () => changeLanguage("en"),
-    },
-    {
-      key: "ru",
-      label: (
-        <Space>
-          <span>🇷🇺</span>
-          <Text style={{ color: "#ffffff" }}>Русский</Text>
-          {i18n.language === "ru" && (
-            <CheckOutlined style={{ color: "#979797", fontSize: "14px" }} />
-          )}
-        </Space>
-      ),
-      onClick: () => changeLanguage("ru"),
-    },
+  const languages = [
+    { value: "ru", label: "Русский" },
+    { value: "en", label: "English" },
   ];
+
+  const handleLanguageChange = (value: string) => {
+    i18n.changeLanguage(value);
+    localStorage.setItem('language', value);
+  };
 
   return (
     <Flex align="center" justify="space-between" style={{ padding: "8px 0" }}>
-      <Text style={{ color: "#ffffff" }}>{t("language")}</Text>
-      <Dropdown 
-        menu={{ 
-          items,
-          style: { 
-            backgroundColor: "#2C2C2C", 
-            border: "1px solid rgba(151,151,151,0.2)",
-            borderRadius: "8px",
-          }
-        }} 
-        placement="bottomRight" 
-        trigger={["click"]}
-      >
-        <Button 
-          icon={<GlobalOutlined style={{ color: "#979797" }} />}
-          style={{
-            backgroundColor: "#2C2C2C",
-            border: "1px solid rgba(151,151,151,0.2)",
-            color: "#ffffff",
-          }}
-        >
-          {i18n.language === "ru" ? "Русский" : "English"}
-        </Button>
-      </Dropdown>
+      <Text style={getLabelStyle(theme)}>{t("language") || "Язык"}</Text>
+      <Select
+        value={i18n.language}
+        onChange={handleLanguageChange}
+        options={languages}
+        style={{ width: 120 }}
+        popupClassName="custom-select-dropdown"
+        dropdownStyle={{ 
+          backgroundColor: theme.surface,
+          border: `1px solid ${theme.border}`,
+        }}
+      />
     </Flex>
   );
 };

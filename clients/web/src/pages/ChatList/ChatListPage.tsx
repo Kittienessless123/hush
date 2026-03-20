@@ -1,53 +1,93 @@
+// pages/ChatListPage.tsx
 import { ChatList } from "../../components/chat/ChatList";
-import { ChatHeader } from "../../components/chat/ChatHeader";
 import { observer } from "mobx-react-lite";
-import { Flex, Typography, Divider } from "antd";
+import { Flex, Typography, Divider, Dropdown, Button } from "antd";
+import { useNavigate } from "react-router-dom";
+import { UserOutlined, SettingOutlined, MenuOutlined } from "@ant-design/icons";
+import { useTheme } from "../../hooks/useTheme";
+import { useTranslation } from "react-i18next";
+import { getThreeColumnLayout, getCenterColumn } from "../../styles/containers";
+import {
+  getPageTitleStyle,
+  getSecondaryTextStyle,
+} from "../../styles/typography";
 
 const { Title, Text } = Typography;
 
 export const ChatListPage = observer(() => {
- 
-  
+  const { theme } = useTheme();
+  const { t } = useTranslation("chat");
+  const navigate = useNavigate();
   const mockUnreadTotal = 7;
 
+  const menuItems = [
+    {
+      key: "profile",
+      icon: <UserOutlined />,
+      label: t("profile"),
+      onClick: () => navigate("/me"),
+    },
+    {
+      key: "settings",
+      icon: <SettingOutlined />,
+      label: t("settings"),
+      onClick: () => navigate("/settings"),
+    },
+  ];
+
+  const dropdownMenu = {
+    items: menuItems,
+  };
+
   return (
-    <Flex style={{ minHeight: "calc(100vh - 70px)" }}>
-      {/* Левая пустая треть */}
+    <Flex style={getThreeColumnLayout(theme)}>
       <div style={{ flex: 1 }} />
-      
-      {/* Центральная треть с чатами */}
-      <Flex 
-        vertical 
-        style={{ 
-          flex: "0 0 33.333%",
-          maxWidth: "500px",
-          backgroundColor: "#1C1C1C",
-          borderLeft: "1px solid rgba(151,151,151,0.2)",
-          borderRight: "1px solid rgba(151,151,151,0.2)",
-        }}
-      >
-        <ChatHeader />
-        
+
+      <Flex vertical style={getCenterColumn(theme)}>
+        <Flex 
+          justify="space-between" 
+          align="center" 
+          style={{ 
+            padding: "12px 16px",
+            borderBottom: `1px solid ${theme.divider}`,
+          }}
+        >
+          <Title level={3} style={{ margin: 0, color: theme.text }}>
+            Hush
+          </Title>
+          <Dropdown menu={dropdownMenu} placement="bottomRight" trigger={['click']}>
+            <Button
+              type="text"
+              icon={<MenuOutlined style={{ color: theme.textSecondary, fontSize: "18px" }} />}
+              style={{
+                width: 32,
+                height: 32,
+              }}
+            />
+          </Dropdown>
+        </Flex>
+
         <Flex vertical style={{ padding: "16px" }}>
           <Flex justify="space-between" align="center">
-            <Title level={3} style={{ margin: 0, color: "#ffffff" }}>
-              Чаты
+            <Title level={4} style={getPageTitleStyle(theme)}>
+              {t("title")}
             </Title>
-            <Text style={{ color: "#979797" }}>
-              {mockUnreadTotal} непрочитано
+            <Text style={getSecondaryTextStyle(theme)}>
+              {mockUnreadTotal} {t("unreadMessages")}
             </Text>
           </Flex>
-          
-          <Divider style={{ 
-            margin: "16px 0", 
-            borderColor: "rgba(151,151,151,0.2)",
-          }} />
-          
+
+          <Divider
+            style={{
+              margin: "16px 0",
+              borderColor: theme.divider,
+            }}
+          />
+
           <ChatList />
         </Flex>
       </Flex>
-      
-      {/* Правая пустая треть */}
+
       <div style={{ flex: 1 }} />
     </Flex>
   );

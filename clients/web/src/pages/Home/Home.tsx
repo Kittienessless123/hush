@@ -1,92 +1,65 @@
-// Home.tsx
-import { Button, Flex, Typography } from "antd";
+// pages/Home.tsx
+import { Button, Flex } from "antd";
 import { observer } from "mobx-react-lite";
 import { useNavigate } from "react-router-dom";
-
-const { Title } = Typography;
+import { useTheme } from "../../hooks/useTheme";
+import { getHushLogoStyle } from "../../styles/typography";
+import { buttonHoverStyles } from "../../styles/forms";
 
 export const Home = observer(() => {
   const navigate = useNavigate();
+  const { theme } = useTheme();
 
-  const RegisterHelper = () => {
-    navigate("/register");
+  const buttonStyle = {
+    minWidth: 140,
+    height: 44,
+    fontSize: 16,
+    background: "transparent",
+    color: theme.textSecondary,
+    boxShadow: `0 0 15px ${theme.glow}`,
+    border: "none",
+    borderRadius: 4,
+    transition: "all 0.3s ease",
   };
 
-  const LoginHelper = () => {
-    navigate("/login");
+  const handleMouseEnter = (e: React.MouseEvent<HTMLElement>) => {
+    const styles = buttonHoverStyles(theme);
+    e.currentTarget.style.boxShadow = styles.boxShadow;
+    e.currentTarget.style.color = theme.text;
+  };
+
+  const handleMouseLeave = (e: React.MouseEvent<HTMLElement>) => {
+    e.currentTarget.style.boxShadow = `0 0 15px ${theme.glow}`;
+    e.currentTarget.style.color = theme.textSecondary;
   };
 
   return (
     <Flex
       style={{
-        minHeight: "calc(100vh - 70px)", // учитываем footer
-        backgroundColor: "#1C1C1C",
+        minHeight: "calc(100vh - 70px)",
+        backgroundColor: theme.background,
       }}
       align="center"
       justify="center"
       vertical
     >
-      <Title
-        style={{
-          fontFamily: "'Six Caps', sans-serif",
-          fontWeight: 200,
-          letterSpacing: "-10%",
-          fontStretch: "20%",
-          fontSize: "220px",
-          color: "#979797",
-          lineHeight: 0.9,
-          marginBottom: 32,
-          textTransform: "uppercase",
-            transform: "scaleX(0.6)",
-        }}
-      >
+      <h1 style={getHushLogoStyle(theme)}>
         hush
-      </Title>
+      </h1>
       <Flex gap="middle">
         <Button
-          onClick={RegisterHelper}
-          style={{
-            minWidth: 140,
-            height: 44,
-            fontSize: 16,
-            background: "transparent",
-            color: "#979797",
-            boxShadow: "0 0 15px rgba(151,151,151,0.3)",
-            border: "none",
-            borderRadius: 4,
-          
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.boxShadow = "0 0 25px rgba(151,151,151,0.6)";
-            e.currentTarget.style.color = "#ffffff";
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.boxShadow = "0 0 15px rgba(151,151,151,0.3)";
-            e.currentTarget.style.color = "#979797";
-          }}
+          onClick={() => navigate("/register")}
+          style={buttonStyle}
+          onMouseEnter={handleMouseEnter}
+          onMouseLeave={handleMouseLeave}
         >
           Register
         </Button>
         <Button
-          onClick={LoginHelper}
-          style={{
-            minWidth: 140,
-            height: 44,
-            fontSize: 16,
-            background: "transparent",
-            color: "#979797",
-            boxShadow: "0 0 15px rgba(151,151,151,0.3)",
-            border: "none",
-            borderRadius: 4,
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.boxShadow = "0 0 25px rgba(151,151,151,0.6)";
-            e.currentTarget.style.color = "#ffffff";
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.boxShadow = "0 0 15px rgba(151,151,151,0.3)";
-            e.currentTarget.style.color = "#979797";
-          }}
+          onClick={() => navigate("/login")}
+          style={buttonStyle}
+          onMouseEnter={handleMouseEnter}
+          onMouseLeave={handleMouseLeave}
         >
           Login
         </Button>

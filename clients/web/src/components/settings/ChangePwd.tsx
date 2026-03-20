@@ -1,17 +1,44 @@
-import { Button, Flex, Form, Input,  message } from "antd";
+import { Button, Flex, Form, Input, message } from "antd";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
+import { useTheme } from "../../hooks/useTheme";
+import { getInputStyle, getButtonStyle, getLabelStyle, buttonHoverStyles, inputFocusStyles } from "../../styles/forms";
 
 export const ChangePwd = () => {
+  const { t } = useTranslation("settings");
+  const { theme } = useTheme();
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
 
   const onFinish = () => {
     setLoading(true);
     setTimeout(() => {
-      message.success("Пароль успешно изменен");
+      message.success(t("passwordChanged"));
       form.resetFields();
       setLoading(false);
     }, 1000);
+  };
+
+  const handleFocus = (e: React.FocusEvent<HTMLInputElement>) => {
+    const styles = inputFocusStyles(theme);
+    e.currentTarget.style.boxShadow = styles.boxShadow;
+    e.currentTarget.style.borderColor = styles.borderColor;
+  };
+
+  const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+    e.currentTarget.style.boxShadow = 'none';
+    e.currentTarget.style.borderColor = theme.border;
+  };
+
+  const handleMouseEnter = (e: React.MouseEvent<HTMLElement>) => {
+    const styles = buttonHoverStyles(theme);
+    e.currentTarget.style.boxShadow = styles.boxShadow;
+    e.currentTarget.style.background = styles.background;
+  };
+
+  const handleMouseLeave = (e: React.MouseEvent<HTMLElement>) => {
+    e.currentTarget.style.boxShadow = `0 0 15px ${theme.glow}`;
+    e.currentTarget.style.background = theme.surface;
   };
 
   return (
@@ -23,61 +50,52 @@ export const ChangePwd = () => {
         autoComplete="off"
       >
         <Form.Item
-          label={<span style={{ color: "#ffffff" }}>Старый пароль</span>}
+          label={<span style={getLabelStyle(theme)}>{t("oldPassword")}</span>}
           name="oldPassword"
-          rules={[{ required: true, message: "Введите старый пароль" }]}
+          rules={[{ required: true, message: t("oldPasswordRequired") }]}
         >
           <Input.Password 
-            style={{
-              backgroundColor: "#2C2C2C",
-              border: "1px solid rgba(151,151,151,0.2)",
-              color: "#ffffff",
-              padding: "8px 12px",
-            }}
+            style={getInputStyle(theme)}
+            onFocus={handleFocus}
+            onBlur={handleBlur}
           />
         </Form.Item>
 
         <Form.Item
-          label={<span style={{ color: "#ffffff" }}>Новый пароль</span>}
+          label={<span style={getLabelStyle(theme)}>{t("newPassword")}</span>}
           name="newPassword"
           rules={[
-            { required: true, message: "Введите новый пароль" },
-            { min: 6, message: "Минимум 6 символов" }
+            { required: true, message: t("newPasswordRequired") },
+            { min: 6, message: t("passwordMinLength") }
           ]}
         >
           <Input.Password 
-            style={{
-              backgroundColor: "#2C2C2C",
-              border: "1px solid rgba(151,151,151,0.2)",
-              color: "#ffffff",
-              padding: "8px 12px",
-            }}
+            style={getInputStyle(theme)}
+            onFocus={handleFocus}
+            onBlur={handleBlur}
           />
         </Form.Item>
 
         <Form.Item
-          label={<span style={{ color: "#ffffff" }}>Подтвердите пароль</span>}
+          label={<span style={getLabelStyle(theme)}>{t("confirmPassword")}</span>}
           name="confirmPassword"
           dependencies={['newPassword']}
           rules={[
-            { required: true, message: "Подтвердите пароль" },
+            { required: true, message: t("confirmPasswordRequired") },
             ({ getFieldValue }) => ({
               validator(_, value) {
                 if (!value || getFieldValue('newPassword') === value) {
                   return Promise.resolve();
                 }
-                return Promise.reject(new Error("Пароли не совпадают"));
+                return Promise.reject(new Error(t("passwordsDoNotMatch")));
               },
             }),
           ]}
         >
           <Input.Password 
-            style={{
-              backgroundColor: "#2C2C2C",
-              border: "1px solid rgba(151,151,151,0.2)",
-              color: "#ffffff",
-              padding: "8px 12px",
-            }}
+            style={getInputStyle(theme)}
+            onFocus={handleFocus}
+            onBlur={handleBlur}
           />
         </Form.Item>
 
@@ -86,24 +104,11 @@ export const ChangePwd = () => {
             type="primary" 
             htmlType="submit"
             loading={loading}
-            style={{
-              width: "100%",
-              height: "44px",
-              backgroundColor: "#2C2C2C",
-              border: "1px solid rgba(151,151,151,0.3)",
-              color: "#ffffff",
-              boxShadow: "0 0 15px rgba(151,151,151,0.2)",
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = "#3C3C3C";
-              e.currentTarget.style.boxShadow = "0 0 25px rgba(151,151,151,0.4)";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = "#2C2C2C";
-              e.currentTarget.style.boxShadow = "0 0 15px rgba(151,151,151,0.2)";
-            }}
+            style={getButtonStyle(theme)}
+            onMouseEnter={handleMouseEnter}
+            onMouseLeave={handleMouseLeave}
           >
-            Изменить пароль
+            {t("changePassword")}
           </Button>
         </Form.Item>
       </Form>

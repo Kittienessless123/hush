@@ -1,39 +1,43 @@
+// layouts/Layout.tsx
 import React from "react";
 import { Outlet, ScrollRestoration } from "react-router-dom";
-
 import { Layout as BaseLayout } from "antd";
-
+import { useTheme } from "../../hooks/useTheme";
 
 const { Content, Footer } = BaseLayout;
 
-const footerStyle: React.CSSProperties = {
-  textAlign: 'center',
-  background: '#1c1c1c',
-  borderTop: '1px solid #f0f0f0',
-  color: '#979797',
-};
-
-const contentStyle: React.CSSProperties = {
-  minHeight: 'calc(100vh - 64px - 70px)', // header (64px) + footer (70px)
-  background: '#1c1c1c',
-  padding: 0, // убираем паддинги, так как они будут в конкретных страницах
-  width: '100vw',
-    color: '#ebebeb',
-
-};
-
 export const Layout: React.FC = () => {
+  const { theme } = useTheme();
 
   return (
-    <BaseLayout style={{ minHeight: '100vh' }}>
-   
-      <Content style={contentStyle}>
+    <BaseLayout
+      style={{
+        minHeight: "100vh",
+        width: "100vw",
+        background: theme.background,
+      }}
+    >
+      {/* Шапка с меню пользователя для авторизованных */}
+      <Content
+        style={{
+          minHeight: "calc(100vh - 70px)",
+          background: theme.background,
+          padding: 0,
+          color: theme.text,
+        }}
+      >
         <Outlet />
         <ScrollRestoration />
       </Content>
-      
-      {/* Показываем Footer всегда */}
-      <Footer style={footerStyle}>
+
+      <Footer
+        style={{
+          textAlign: "center",
+          background: theme.background,
+          borderTop: `1px solid ${theme.divider}`,
+          color: theme.textSecondary,
+        }}
+      >
         ©{new Date().getFullYear()} HUSH. All rights reserved.
       </Footer>
     </BaseLayout>

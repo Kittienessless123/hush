@@ -1,6 +1,7 @@
 import { UserOutlined } from "@ant-design/icons";
 import { Avatar, Flex, Typography, Badge } from "antd";
 import { useNavigate } from "react-router-dom";
+import { useTheme } from "../../hooks/useTheme";
 
 const { Title, Text } = Typography;
 
@@ -20,9 +21,16 @@ export const ChatItem = ({
   unreadCount 
 }: ChatItemProps) => {
   const navigate = useNavigate();
+  const { theme } = useTheme();
 
   const onCardClick = () => {
     navigate(`/chat/${id}`);
+  };
+
+  const getBackgroundColor = (isHovered: boolean) => {
+    if (isHovered) return theme.surfaceHover;
+    if (unreadCount > 0) return theme.surface;
+    return "transparent";
   };
 
   return (
@@ -31,43 +39,55 @@ export const ChatItem = ({
       style={{ 
         padding: "12px 16px",
         cursor: "pointer",
-        transition: "all 0.3s ease",
-        backgroundColor: unreadCount > 0 ? "rgba(151,151,151,0.05)" : "transparent",
-        borderBottom: "1px solid rgba(151,151,151,0.1)",
+        transition: "background-color 0.2s ease",
+        backgroundColor: getBackgroundColor(false),
+        borderBottom: `1px solid ${theme.divider}`,
       }}
       onMouseEnter={(e) => {
-        e.currentTarget.style.backgroundColor = "rgba(151,151,151,0.1)";
+        e.currentTarget.style.backgroundColor = getBackgroundColor(true);
       }}
       onMouseLeave={(e) => {
-        e.currentTarget.style.backgroundColor = unreadCount > 0 ? "rgba(151,151,151,0.05)" : "transparent";
+        e.currentTarget.style.backgroundColor = getBackgroundColor(false);
       }}
     >
       <Flex gap="middle" align="center">
-        <Badge count={unreadCount} size="small" offset={[-5, 5]}>
+        <Badge 
+          count={unreadCount} 
+          size="small" 
+          offset={[-5, 5]}
+          style={{
+            backgroundColor: unreadCount > 0 ? theme.textSecondary : theme.border,
+          }}
+        >
           <Avatar 
             size={48} 
             icon={<UserOutlined />} 
             style={{ 
-              backgroundColor: "#2C2C2C",
-              color: "#979797",
-              border: "1px solid rgba(151,151,151,0.3)",
+              backgroundColor: theme.surface,
+              color: theme.textSecondary,
+              border: `1px solid ${theme.border}`,
             }}
           />
         </Badge>
         <Flex vertical flex={1}>
           <Flex justify="space-between" align="center">
-            <Title level={5} style={{ 
-              margin: 0, 
-              color: "#ffffff",
-              fontWeight: unreadCount > 0 ? 600 : 400,
-            }}>
+            <Title 
+              level={5} 
+              style={{ 
+                margin: 0, 
+                color: theme.text,
+                fontWeight: unreadCount > 0 ? 600 : 400,
+              }}
+            >
               {name}
             </Title>
-            <Text style={{ color: "#979797", fontSize: "12px" }}>{lastSeen}</Text>
+            <Text style={{ color: theme.textSecondary, fontSize: "12px" }}>
+              {lastSeen}
+            </Text>
           </Flex>
           <Text 
             style={{ 
-              color: "#979797", 
+              color: theme.textSecondary, 
               fontSize: "14px",
               fontWeight: unreadCount > 0 ? 500 : 400,
             }}

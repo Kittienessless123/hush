@@ -1,0 +1,82 @@
+/* styles/global.css */
+@import url('https://fonts.googleapis.com/css2?family=Six+Caps&display=swap');
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* Стили для скроллбара */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(151, 151, 151, 0.3);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(151, 151, 151, 0.5);
+}
+
+/* Анимации */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideIn {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+
+@keyframes glow {
+  0% { box-shadow: 0 0 5px rgba(151,151,151,0.2); }
+  50% { box-shadow: 0 0 20px rgba(151,151,151,0.6); }
+  100% { box-shadow: 0 0 5px rgba(151,151,151,0.2); }
+}
+
+/* Классы для анимаций */
+.fade-in {
+  animation: fadeIn 0.3s ease;
+}
+
+.slide-in {
+  animation: slideIn 0.3s ease;
+}
+
+.glow {
+  animation: glow 2s infinite;
+}
+
+/* Ant Design overrides */
+.ant-select-dropdown {
+  background-color: var(--ant-surface) !important;
+  border: 1px solid var(--ant-border) !important;
+}
+
+.ant-select-item {
+  color: var(--ant-text) !important;
+}
+
+.ant-checkbox-wrapper {
+  color: var(--ant-text-secondary) !important;
+}
+
+.ant-message {
+  z-index: 9999;
+}
+
+.ant-message-notice-content {
+  background: var(--ant-surface) !important;
+  color: var(--ant-text) !important;
+  border: 1px solid var(--ant-border) !important;
+  box-shadow: 0 0 20px var(--ant-glow) !important;
+}

@@ -1,3 +1,4 @@
+// pages/ChatPage.tsx
 import { ChatHeader } from "../../components/chat/ChatHeader";
 import { MessageList } from "../../components/chat/MessageList";
 import { MessageInput } from "../../components/chat/MessageInput";
@@ -5,43 +6,46 @@ import { ChatInfo } from "../../components/chat/ChatInfo";
 import { observer } from "mobx-react-lite";
 import { useState } from "react";
 import { Flex } from "antd";
+import { useTheme } from "../../hooks/useTheme";
+import { getThreeColumnLayout, getCenterColumn } from "../../styles/containers";
 
 export const ChatPage = observer(() => {
   const [showChatInfo, setShowChatInfo] = useState(false);
+  const { theme } = useTheme();
 
   return (
-    <Flex style={{ minHeight: "calc(100vh - 70px)" }}>
+    <Flex style={getThreeColumnLayout(theme)}>
       {/* Левая пустая треть */}
       <div style={{ flex: 1 }} />
-      
+
       {/* Центральная треть с чатом */}
-      <Flex 
-        style={{ 
-          flex: "0 0 33.333%",
-          maxWidth: "500px",
-          width: "100%",
-          backgroundColor: "#1C1C1C",
+      <Flex
+        style={{
+          ...getCenterColumn(theme),
           position: "relative",
+          borderLeft: "none",
+          borderRight: "none",
         }}
       >
-        <Flex 
-          vertical 
-          style={{ 
+        <Flex
+          vertical
+          style={{
             flex: 1,
             width: showChatInfo ? "calc(100% - 320px)" : "100%",
             transition: "width 0.3s ease",
           }}
         >
-          <ChatHeader onAvatarClick={() => setShowChatInfo(!showChatInfo)} />
+          <ChatHeader
+            showBackButton={true}
+            onAvatarClick={() => setShowChatInfo(!showChatInfo)}
+          />
           <MessageList />
           <MessageInput />
         </Flex>
-        
-        {showChatInfo && (
-          <ChatInfo onClose={() => setShowChatInfo(false)} />
-        )}
+
+        {showChatInfo && <ChatInfo onClose={() => setShowChatInfo(false)} />}
       </Flex>
-      
+
       {/* Правая пустая треть */}
       <div style={{ flex: 1 }} />
     </Flex>

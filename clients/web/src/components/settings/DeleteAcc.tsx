@@ -1,28 +1,31 @@
 import { DeleteOutlined } from "@ant-design/icons";
-import { Button, Flex, Typography, message, Modal } from "antd";
+import { Button, Flex, Typography, message, Popconfirm } from "antd";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { useState } from "react";
+
 const { Text } = Typography;
 
 export const DeleteAcc = () => {
   const { t } = useTranslation("settings");
   const navigate = useNavigate();
-  const [modalVisible, setModalVisible] = useState(false);
 
   const onDeleteAccount = () => {
-    // Здесь логика удаления аккаунта
-    message.error("Аккаунт удален");
-    setModalVisible(false);
+    message.error(t("accountDeleted"));
     navigate("/");
   };
 
   return (
-    <>
-      <Flex align="center" justify="space-between" style={{ padding: "8px 0" }}>
-        <Text style={{ color: "#ff4d4f" }}>{t("deleteAccount")}</Text>
+    <Flex align="center" justify="space-between" style={{ padding: "8px 0" }}>
+      <Text style={{ color: "#ff4d4f" }}>{t("deleteAccount")}</Text>
+      <Popconfirm
+        title={t("deleteAccountConfirm")}
+        description={t("deleteAccountConfirmMessage")}
+        onConfirm={onDeleteAccount}
+        okText={t("delete")}
+        cancelText={t("cancel")}
+        okButtonProps={{ danger: true }}
+      >
         <Button 
-          onClick={() => setModalVisible(true)} 
           icon={<DeleteOutlined />}
           danger
           style={{
@@ -31,19 +34,7 @@ export const DeleteAcc = () => {
             color: "#ff4d4f",
           }}
         />
-      </Flex>
-
-      <Modal
-        title="Подтверждение удаления"
-        open={modalVisible}
-        onOk={onDeleteAccount}
-        onCancel={() => setModalVisible(false)}
-        okText="Удалить"
-        cancelText="Отмена"
-        okButtonProps={{ danger: true }}
-      >
-        <Text>Вы уверены, что хотите удалить аккаунт? Это действие необратимо.</Text>
-      </Modal>
-    </>
+      </Popconfirm>
+    </Flex>
   );
 };

@@ -1,3 +1,4 @@
+// pages/RegisterPage.tsx
 import { observer } from "mobx-react-lite";
 import { RegisterForm } from "../../components/auth/RegisterForm";
 import { useEffect } from "react";
@@ -9,7 +10,6 @@ export const RegisterPage = observer(() => {
   const navigate = useNavigate();
 
   useEffect(() => {
-
     if (user) {
       navigate("/dashboard", { replace: true });
     }
