@@ -3,7 +3,7 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { PrismaModule } from './prisma/prisma.module';
 import { MessagesModule } from './messages/messages.module';
-import { ChatsModule } from './chats/chats.module';
+import { ChatModule } from './chats/chats.module';
 import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
 import { TokenModule } from './token/token.module';
@@ -16,7 +16,7 @@ import { CommonModule } from './common/common.module';
   imports: [
     UsersModule,
     AuthModule,
-    ChatsModule,
+    ChatModule,
     MessagesModule,
     PrismaModule,
     TokenModule,
