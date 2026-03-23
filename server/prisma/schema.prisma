@@ -1,6 +1,6 @@
 generator client {
   provider = "prisma-client"
-  output   = "../generated/prisma"
+  output   = "../"
 }
 
 datasource db {
@@ -8,21 +8,85 @@ datasource db {
 }
 
 model User {
-  id           String  @id @default(uuid())
-  username     String  @unique
-  login        String  @unique
-  passwordHash String  @map("password_hash")
-  publicKey    String? @map("public_key")
+  id           String    @id @default(uuid())
+  username     String    @unique
+  login        String    @unique
+  passwordHash String    @map("password_hash")
+  publicKey    String?   @map("public_key")
+  email        String?   @unique
+  avatar       String?
+  lastSeen     DateTime? @map("last_seen")
+  onlineStatus Boolean   @default(false) @map("online_status")
+  phone        String?   @default("")
+  description  String?   @default("Using hush")
 
   sentMessages  Message[]
   chatsAsUser1  Chat[]         @relation("User1Chats")
   chatsAsUser2  Chat[]         @relation("User2Chats")
   refreshTokens RefreshToken[]
 
+  // Friends relationships - no @map on relation fields
+  friendshipsInitiated Friend[] @relation("UserFriends")
+  friendshipsReceived  Friend[] @relation("FriendUser")
+
+  // Blacklist relationships - no @map on relation fields
+  blockedUsers Blacklist[] @relation("Blocker")
+  blockedBy    Blacklist[] @relation("Blocked")
+
+  settings UserSettings?
+
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
   @@map("users")
+}
+
+model Friend {
+  id       String       @id @default(uuid())
+  userId   String       @map("user_id")
+  friendId String       @map("friend_id")
+  status   FriendStatus @default(pending)
+
+  user   User @relation("UserFriends", fields: [userId], references: [id], onDelete: Cascade)
+  friend User @relation("FriendUser", fields: [friendId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@unique([userId, friendId])
+  @@map("friends")
+}
+
+model Blacklist {
+  id        String  @id @default(uuid())
+  blockerId String  @map("blocker_id")
+  blockedId String  @map("blocked_id")
+  reason    String?
+
+  blocker User @relation("Blocker", fields: [blockerId], references: [id], onDelete: Cascade)
+  blocked User @relation("Blocked", fields: [blockedId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@unique([blockerId, blockedId])
+  @@map("blacklist")
+}
+
+model UserSettings {
+  id            String  @id @default(uuid())
+  userId        String  @unique @map("user_id")
+  theme         String  @default("system")
+  language      String  @default("en")
+  notifications Json // Store notifications settings as JSON
+  privacy       Json // Store privacy settings as JSON
+  twoFactorAuth Boolean @default(false) @map("two_factor_auth")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("user_settings")
 }
 
 model Chat {
@@ -73,4 +137,10 @@ model RefreshToken {
   createdAt DateTime @default(now()) @map("created_at")
 
   @@map("refresh_tokens")
+}
+
+enum FriendStatus {
+  pending
+  accepted
+  rejected
 }
