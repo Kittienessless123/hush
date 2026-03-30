@@ -1,8 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
-/* eslint-disable @typescript-eslint/no-unsafe-call */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
-// src/common/guards/jwt-auth.guard.ts
 import {
   Injectable,
   ExecutionContext,
@@ -14,7 +12,7 @@ import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { Request } from 'express';
 import { IS_PUBLIC_KEY } from '../../decorators/public.decorator';
-import { TokenService } from 'src/token/token.service';
+import { CurrentUserPayload } from '../../decorators/current-user/current-user.decorator';
 
 @Injectable()
 export class JwtAuthGuard implements CanActivate {
@@ -22,11 +20,9 @@ export class JwtAuthGuard implements CanActivate {
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
     private readonly reflector: Reflector,
-    private readonly tokenService?: TokenService, // Optional for backward compatibility
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    // Check if route is public
     const isPublic = this.reflector.getAllAndOverride<boolean>(IS_PUBLIC_KEY, [
       context.getHandler(),
       context.getClass(),
@@ -44,26 +40,24 @@ export class JwtAuthGuard implements CanActivate {
     }
 
     try {
-      const payload = await this.jwtService.verifyAsync(token, {
-        secret: this.configService.get('JWT_ACCESS_SECRET'),
-      });
-
-      // Optional: Check if token is blacklisted or revoked
-      if (this.tokenService && payload.tokenId) {
-        const isValid = await this.tokenService.validateToken?.(
-          payload.tokenId,
-        );
-        if (!isValid) {
-          throw new UnauthorizedException('Token has been revoked');
-        }
-      }
+      const payload = await this.jwtService.verifyAsync<CurrentUserPayload>(
+        token,
+        {
+          secret: this.configService.get('JWT_ACCESS_SECRET'),
+        },
+      );
 
       // Attach user to request
       request.user = {
         id: payload.sub,
         username: payload.username,
         login: payload.login,
-        ...payload,
+        email: payload.email,
+        tokenId: payload.tokenId,
+        deviceInfo: payload.deviceInfo,
+        iat: payload.iat,
+        exp: payload.exp,
+        role: payload.role,
       };
 
       return true;

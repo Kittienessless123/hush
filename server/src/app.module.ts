@@ -6,7 +6,6 @@ import { MessagesModule } from './messages/messages.module';
 import { ChatModule } from './chats/chats.module';
 import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
-import { TokenModule } from './token/token.module';
 import { JwtAuthGuard } from './common/guards/jwt-auth/jwt-auth.guard';
 import { APP_GUARD } from '@nestjs/core';
 import { RolesGuard } from './common/guards/roles.guard';
@@ -19,7 +18,6 @@ import { CommonModule } from './common/common.module';
     ChatModule,
     MessagesModule,
     PrismaModule,
-    TokenModule,
     CommonModule,
   ],
   controllers: [AppController],
@@ -27,11 +25,11 @@ import { CommonModule } from './common/common.module';
     AppService,
     {
       provide: APP_GUARD,
-      useClass: JwtAuthGuard, // Apply globally
+      useClass: JwtAuthGuard,
     },
     {
       provide: APP_GUARD,
-      useClass: RolesGuard, // Apply globally after JWT
+      useClass: RolesGuard,
     },
   ],
 })

@@ -4,20 +4,15 @@ import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
-import { UsersModule } from '../users/users.module';
-import { TokenModule } from '../token/token.module';
-import { CommonModule } from '../common/common.module';
-import { UserRepository } from '../common/repositories/user.repository';
+import { CommonModule } from '../common/common.module'; // только CommonModule
 import { UserMapper } from '../users/mappers/user.mapper';
 
 @Module({
   imports: [
-    UsersModule,
-    TokenModule,
-    CommonModule,
+    CommonModule, // Все репозитории приходят отсюда
     JwtModule.registerAsync({
       imports: [ConfigModule],
-      useFactory: (configService: ConfigService) => ({
+      useFactory: async (configService: ConfigService) => ({
         secret: configService.get('JWT_ACCESS_SECRET'),
         signOptions: {
           expiresIn: configService.get('JWT_ACCESS_EXPIRES_IN', '1h'),
@@ -27,7 +22,10 @@ import { UserMapper } from '../users/mappers/user.mapper';
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthService, UserRepository, UserMapper],
+  providers: [
+    AuthService,
+    UserMapper, // UserMapper может быть в UsersModule или здесь
+  ],
   exports: [AuthService],
 })
 export class AuthModule {}

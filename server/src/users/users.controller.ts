@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-/* eslint-disable @typescript-eslint/no-unsafe-argument */
 import {
   Controller,
   Get,
@@ -9,140 +7,178 @@ import {
   Param,
   Delete,
   Query,
+  ParseUUIDPipe,
+  UseGuards,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
-import { CreateUserDto } from './dto/create-user.dto';
-import { UpdateUserDto } from './dto/update-user.dto';
-import { ChangePasswordDto } from './dto/change-password.dto';
-import { AddToBlacklistDto } from './dto/add-to-blacklist.dto';
-import { UpdateSettingsDto } from './dto/update-settings.dto';
-import { CurrentUser } from 'src/common/decorators/current-user/current-user.decorator';
+import { JwtAuthGuard } from '../common/guards/jwt-auth/jwt-auth.guard';
+import * as currentUserDecorator from '../common/decorators/current-user/current-user.decorator';
+import { Public } from '../common/decorators/public.decorator';
+import {
+  CreateUserDto,
+  UpdateUserDto,
+  ChangePasswordDto,
+  AddToBlacklistDto,
+  UpdateSettingsDto,
+  SearchUsersQueryDto,
+  CreateFriendRequestDto,
+} from './dto';
 
 @Controller('users')
+@UseGuards(JwtAuthGuard)
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
+  @Public()
   @Post()
-  create(@Body() createUserDto: CreateUserDto) {
-    return this.usersService.create(createUserDto);
+  async create(@Body() createUserDto: CreateUserDto) {
+    return await this.usersService.create(createUserDto);
   }
 
+  @Public()
   @Get()
-  findAll() {
-    return this.usersService.findAll();
+  async findAll() {
+    return await this.usersService.findAll();
   }
 
+  @Public()
   @Get('profile/:id')
-  findOne(@Param('id') id: string) {
-    return this.usersService.findOne(id);
+  async findOne(@Param('id', ParseUUIDPipe) id: string) {
+    return await this.usersService.findOne(id);
   }
 
-  @Patch('profile/:id')
-  update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
-    return this.usersService.update(id, updateUserDto);
+  @Patch('profile')
+  async update(
+    @currentUserDecorator.CurrentUser()
+    currentUser: currentUserDecorator.CurrentUserPayload,
+    @Body() updateUserDto: UpdateUserDto,
+  ) {
+    return await this.usersService.update(currentUser.id, updateUserDto);
   }
 
-  @Delete('profile/:id')
-  remove(@Param('id') id: string) {
-    return this.usersService.remove(id);
+  @Delete('profile')
+  async remove(@currentUserDecorator.CurrentUser('id') userId: string) {
+    return await this.usersService.remove(userId);
   }
 
   @Get('friends')
-  getAllFriends(@CurrentUser() currentUser: any) {
-    return this.usersService.getAllFriends(currentUser.id);
+  async getAllFriends(@currentUserDecorator.CurrentUser('id') userId: string) {
+    return await this.usersService.getAllFriends(userId);
   }
 
-  @Post('friends/requests/:userId')
-  sendFriendRequest(
-    @Param('userId') targetUserId: string,
-    @CurrentUser() currentUser: any,
+  @Post('friends/requests')
+  async sendFriendRequest(
+    @Body() createRequestDto: CreateFriendRequestDto,
+    @currentUserDecorator.CurrentUser('id') currentUserId: string,
   ) {
-    return this.usersService.sendFriendRequest(currentUser.id, targetUserId);
+    return await this.usersService.sendFriendRequest(
+      currentUserId,
+      createRequestDto.targetUserId,
+    );
   }
 
   @Patch('friends/requests/:requestId/accept')
-  acceptFriendRequest(
-    @Param('requestId') requestId: string,
-    @CurrentUser() currentUser: any,
+  async acceptFriendRequest(
+    @Param('requestId', ParseUUIDPipe) requestId: string,
+    @currentUserDecorator.CurrentUser('id') currentUserId: string,
   ) {
-    return this.usersService.acceptFriendRequest(currentUser.id, requestId);
+    return await this.usersService.acceptFriendRequest(
+      currentUserId,
+      requestId,
+    );
   }
 
   @Delete('friends/requests/:requestId/reject')
-  rejectFriendRequest(
-    @Param('requestId') requestId: string,
-    @CurrentUser() currentUser: any,
+  async rejectFriendRequest(
+    @Param('requestId', ParseUUIDPipe) requestId: string,
+    @currentUserDecorator.CurrentUser('id') currentUserId: string,
   ) {
-    return this.usersService.rejectFriendRequest(currentUser.id, requestId);
+    return await this.usersService.rejectFriendRequest(
+      currentUserId,
+      requestId,
+    );
   }
 
   @Delete('friends/:friendId')
-  removeFriend(
-    @Param('friendId') friendId: string,
-    @CurrentUser() currentUser: any,
+  async removeFriend(
+    @Param('friendId', ParseUUIDPipe) friendId: string,
+    @currentUserDecorator.CurrentUser('id') currentUserId: string,
   ) {
-    return this.usersService.removeFriend(currentUser.id, friendId);
+    return await this.usersService.removeFriend(currentUserId, friendId);
   }
 
-  @Patch('settings/password')
-  changePassword(
-    @Body() changePasswordDto: ChangePasswordDto,
-    @CurrentUser() currentUser: any,
+  @Get('friends/requests/incoming')
+  async getIncomingRequests(
+    @currentUserDecorator.CurrentUser('id') userId: string,
   ) {
-    return this.usersService.changePassword(currentUser.id, changePasswordDto);
+    return await this.usersService.getIncomingFriendRequests(userId);
+  }
+
+  @Get('friends/requests/outgoing')
+  async getOutgoingRequests(
+    @currentUserDecorator.CurrentUser('id') userId: string,
+  ) {
+    return await this.usersService.getOutgoingFriendRequests(userId);
   }
 
   @Get('settings')
-  getSettings(@CurrentUser() currentUser: any) {
-    return this.usersService.getSettings(currentUser.id);
+  async getSettings(@currentUserDecorator.CurrentUser('id') userId: string) {
+    return await this.usersService.getSettings(userId);
   }
 
   @Patch('settings')
-  updateSettings(
+  async updateSettings(
     @Body() updateSettingsDto: UpdateSettingsDto,
-    @CurrentUser() currentUser: any,
+    @currentUserDecorator.CurrentUser('id') userId: string,
   ) {
-    return this.usersService.updateSettings(currentUser.id, updateSettingsDto);
+    return await this.usersService.updateSettings(userId, updateSettingsDto);
+  }
+
+  @Patch('settings/password')
+  async changePassword(
+    @Body() changePasswordDto: ChangePasswordDto,
+    @currentUserDecorator.CurrentUser('id') userId: string,
+  ) {
+    return await this.usersService.changePassword(userId, changePasswordDto);
   }
 
   @Get('blacklist')
-  getAllBlackList(@CurrentUser() currentUser: any) {
-    return this.usersService.getAllBlackList(currentUser.id);
+  async getAllBlackList(
+    @currentUserDecorator.CurrentUser('id') userId: string,
+  ) {
+    return await this.usersService.getAllBlackList(userId);
   }
 
-  @Post('blacklist/:userId')
-  addToBlackList(
-    @Param('userId') userId: string,
+  @Post('blacklist')
+  async addToBlackList(
     @Body() addToBlacklistDto: AddToBlacklistDto,
-    @CurrentUser() currentUser: any,
+    @currentUserDecorator.CurrentUser('id') currentUserId: string,
   ) {
-    return this.usersService.addToBlackList(
-      currentUser.id,
-      userId,
+    return await this.usersService.addToBlackList(
+      currentUserId,
+      addToBlacklistDto.userId,
       addToBlacklistDto,
     );
   }
 
   @Delete('blacklist/:userId')
-  removeFromBlackList(
-    @Param('userId') userId: string,
-    @CurrentUser() currentUser: any,
+  async removeFromBlackList(
+    @Param('userId', ParseUUIDPipe) userId: string,
+    @currentUserDecorator.CurrentUser('id') currentUserId: string,
   ) {
-    return this.usersService.removeFromBlackList(currentUser.id, userId);
+    return await this.usersService.removeFromBlackList(currentUserId, userId);
   }
 
   @Get('search')
-  searchUsersByQuery(
-    @CurrentUser() currentUser: any,
-    @Query('query') query: string,
-    @Query('limit') limit?: string,
-    @Query('offset') offset?: string,
+  async searchUsersByQuery(
+    @currentUserDecorator.CurrentUser('id') currentUserId: string,
+    @Query() searchQuery: SearchUsersQueryDto,
   ) {
-    return this.usersService.searchUsersByQuery(
-      currentUser.id,
-      query,
-      limit ? parseInt(limit) : 20,
-      offset ? parseInt(offset) : 0,
+    return await this.usersService.searchUsersByQuery(
+      currentUserId,
+      searchQuery.query || '',
+      searchQuery.limit,
+      searchQuery.offset,
     );
   }
 }

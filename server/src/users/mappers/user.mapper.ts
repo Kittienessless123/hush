@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 // src/users/mappers/user.mapper.ts
 import { Injectable } from '@nestjs/common';
-import { User, UserSettings } from '../../generated/client';
+import { User, UserSettings } from '@prisma/client';
 import { UserResponseDto } from '../dto/user-response.dto/user-response.dto';
 import { FriendWithUsers } from '../../common/repositories/friend.repository';
 import {

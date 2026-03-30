@@ -1,7 +1,7 @@
 // src/chat/repositories/message.repository.ts
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
-import { Message, Prisma } from '../../generated/client';
+import { Message, Prisma } from '@prisma/client';
 
 export interface MessageWithSender extends Message {
   sender: {

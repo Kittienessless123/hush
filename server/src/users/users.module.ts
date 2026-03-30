@@ -1,24 +1,18 @@
+// src/users/users.module.ts
 import { Module } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { UsersController } from './users.controller';
-import { PrismaModule } from 'src/prisma/prisma.module';
-import { BlacklistRepository } from 'src/common/repositories/blacklist.repository';
-import { FriendRepository } from 'src/common/repositories/friend.repository';
-import { SettingsRepository } from 'src/common/repositories/settings.repository';
-import { UserRepository } from 'src/common/repositories/user.repository';
+import { CommonModule } from '../common/common.module'; // 👈 Импортируйте CommonModule
 import { UserMapper } from './mappers/user.mapper';
 
 @Module({
-  imports: [PrismaModule],
+  imports: [CommonModule], // 👈 Все репозитории приходят из CommonModule
   controllers: [UsersController],
   providers: [
     UsersService,
-    UserRepository,
-    FriendRepository,
-    BlacklistRepository,
-    SettingsRepository,
     UserMapper,
+    // Убираем репозитории отсюда - они уже в CommonModule
   ],
-  exports: [UsersService],
+  exports: [UsersService, UserMapper], // 👈 Экспортируйте UserMapper если нужно
 })
 export class UsersModule {}

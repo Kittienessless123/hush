@@ -1,7 +1,7 @@
 // src/common/repositories/settings.repository.ts
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
-import { UserSettings, Prisma } from '../../generated/client';
+import { UserSettings, Prisma } from '@prisma/client';
 
 @Injectable()
 export class SettingsRepository {

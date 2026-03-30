@@ -15,14 +15,35 @@ const messages_module_1 = require("./messages/messages.module");
 const chats_module_1 = require("./chats/chats.module");
 const auth_module_1 = require("./auth/auth.module");
 const users_module_1 = require("./users/users.module");
+const jwt_auth_guard_1 = require("./common/guards/jwt-auth/jwt-auth.guard");
+const core_1 = require("@nestjs/core");
+const roles_guard_1 = require("./common/guards/roles.guard");
+const common_module_1 = require("./common/common.module");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
 exports.AppModule = AppModule = __decorate([
     (0, common_1.Module)({
-        imports: [users_module_1.UsersModule, auth_module_1.AuthModule, chats_module_1.ChatsModule, messages_module_1.MessagesModule, prisma_module_1.PrismaModule],
+        imports: [
+            users_module_1.UsersModule,
+            auth_module_1.AuthModule,
+            chats_module_1.ChatModule,
+            messages_module_1.MessagesModule,
+            prisma_module_1.PrismaModule,
+            common_module_1.CommonModule,
+        ],
         controllers: [app_controller_1.AppController],
-        providers: [app_service_1.AppService],
+        providers: [
+            app_service_1.AppService,
+            {
+                provide: core_1.APP_GUARD,
+                useClass: jwt_auth_guard_1.JwtAuthGuard,
+            },
+            {
+                provide: core_1.APP_GUARD,
+                useClass: roles_guard_1.RolesGuard,
+            },
+        ],
     })
 ], AppModule);
 //# sourceMappingURL=app.module.js.map

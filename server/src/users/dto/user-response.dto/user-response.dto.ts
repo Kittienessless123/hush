@@ -10,7 +10,7 @@ import {
   IsString,
   IsUUID,
 } from 'class-validator';
-import type { UserSettings } from 'src/generated/client';
+import type { UserSettings } from '@prisma/client';
 
 @Exclude()
 export class UserResponseDto {

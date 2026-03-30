@@ -1,7 +1,7 @@
 // src/chat/repositories/chat.repository.ts
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
-import { Chat } from '../../generated/client';
+import { Chat } from '@prisma/client';
 
 export interface ChatWithUsers extends Chat {
   user1: {

@@ -1,4 +1,4 @@
-import { UserSettings } from 'src/generated/client';
+import { UserSettings } from '@prisma/client';
 
 export type Nullable<T> = T | null;
 export type Optional<T> = T | undefined;

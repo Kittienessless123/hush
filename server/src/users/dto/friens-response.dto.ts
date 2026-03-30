@@ -1,4 +1,4 @@
-import { FriendStatus } from 'src/generated/enums';
+import { FriendStatus } from '@prisma/client';
 
 export class FriendRequestResponseDto {
   id: string;

@@ -1,10 +1,17 @@
+// prisma/schema.prisma
 generator client {
-  provider = "prisma-client"
-  output   = "../"
+  provider = "prisma-client-js"
 }
 
 datasource db {
   provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum FriendStatus {
+  pending
+  accepted
+  rejected
 }
 
 model User {
@@ -20,19 +27,25 @@ model User {
   phone        String?   @default("")
   description  String?   @default("Using hush")
 
-  sentMessages  Message[]
-  chatsAsUser1  Chat[]         @relation("User1Chats")
-  chatsAsUser2  Chat[]         @relation("User2Chats")
+  // Сообщения
+  sentMessages Message[] @relation("SentMessages")
+
+  // Чаты
+  chatsAsUser1 Chat[] @relation("User1Chats")
+  chatsAsUser2 Chat[] @relation("User2Chats")
+
+  // Токены
   refreshTokens RefreshToken[]
 
-  // Friends relationships - no @map on relation fields
+  // Друзья
   friendshipsInitiated Friend[] @relation("UserFriends")
   friendshipsReceived  Friend[] @relation("FriendUser")
 
-  // Blacklist relationships - no @map on relation fields
+  // Блэклист
   blockedUsers Blacklist[] @relation("Blocker")
   blockedBy    Blacklist[] @relation("Blocked")
 
+  // Настройки
   settings UserSettings?
 
   createdAt DateTime @default(now()) @map("created_at")
@@ -77,8 +90,8 @@ model UserSettings {
   userId        String  @unique @map("user_id")
   theme         String  @default("system")
   language      String  @default("en")
-  notifications Json // Store notifications settings as JSON
-  privacy       Json // Store privacy settings as JSON
+  notifications Json? // { sound: boolean, popup: boolean, preview: boolean }
+  privacy       Json? // { lastSeen: string, readReceipts: boolean, onlineStatus: boolean }
   twoFactorAuth Boolean @default(false) @map("two_factor_auth")
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -115,7 +128,7 @@ model Message {
   encrypted Boolean @default(true)
 
   chat   Chat @relation(fields: [chatId], references: [id], onDelete: Cascade)
-  sender User @relation(fields: [senderId], references: [id])
+  sender User @relation("SentMessages", fields: [senderId], references: [id])
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
@@ -137,10 +150,4 @@ model RefreshToken {
   createdAt DateTime @default(now()) @map("created_at")
 
   @@map("refresh_tokens")
-}
-
-enum FriendStatus {
-  pending
-  accepted
-  rejected
 }

@@ -1,6 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
-/* eslint-disable @typescript-eslint/no-unsafe-call */
-// src/auth/auth.controller.ts
 import {
   Controller,
   Post,
@@ -23,7 +20,7 @@ import {
   MessageResponseDto,
 } from './dto/auth.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth/jwt-auth.guard';
-import { CurrentUser } from '../common/decorators/current-user/current-user.decorator';
+import * as currentUserDecorator from '../common/decorators/current-user/current-user.decorator';
 import { Public } from '../common/decorators/public.decorator';
 import {
   ApiTags,
@@ -31,6 +28,10 @@ import {
   ApiResponse,
   ApiBearerAuth,
 } from '@nestjs/swagger';
+import {
+  CurrentUser,
+  type CurrentUserPayload,
+} from '../common/decorators/current-user/current-user.decorator';
 
 @ApiTags('Authentication')
 @Controller('auth')
@@ -110,7 +111,7 @@ export class AuthController {
     type: MessageResponseDto,
   })
   async logoutAll(
-    @CurrentUser('id') userId: string,
+    @currentUserDecorator.CurrentUser('id') userId: string,
   ): Promise<MessageResponseDto> {
     return this.authService.logoutAll(userId);
   }
@@ -135,7 +136,10 @@ export class AuthController {
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get current user profile' })
   @ApiResponse({ status: 200, description: 'Current user profile' })
-  async getCurrentUser(@CurrentUser() currentUser: CurrentUser) {
+  async getCurrentUser(
+    @CurrentUser()
+    currentUser: CurrentUserPayload,
+  ) {
     return this.authService.getCurrentUser(currentUser.id);
   }
 
@@ -144,7 +148,10 @@ export class AuthController {
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Validate current session' })
   @ApiResponse({ status: 200, description: 'Session is valid' })
-  async validateSession(@CurrentUser() currentUser: CurrentUser) {
+  validateSession(
+    @currentUserDecorator.CurrentUser()
+    currentUser: currentUserDecorator.CurrentUserPayload,
+  ) {
     return {
       valid: true,
       user: {

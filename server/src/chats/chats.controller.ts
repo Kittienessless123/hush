@@ -1,6 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-/* eslint-disable @typescript-eslint/no-unsafe-argument */
-// src/chat/chat.controller.ts
 import {
   Controller,
   Get,
@@ -15,6 +12,8 @@ import {
   HttpStatus,
 } from '@nestjs/common';
 import { ChatService } from './chats.service';
+import { JwtAuthGuard } from '../common/guards/jwt-auth/jwt-auth.guard';
+import * as currentUserDecorator from '../common/decorators/current-user/current-user.decorator';
 import {
   CreateChatDto,
   SendMessageDto,
@@ -32,8 +31,6 @@ import {
   ApiResponse,
   ApiBearerAuth,
 } from '@nestjs/swagger';
-import { JwtAuthGuard } from 'src/common/guards/jwt-auth/jwt-auth.guard';
-import { CurrentUser } from 'src/common/decorators/current-user/current-user.decorator';
 
 @ApiTags('Chats')
 @Controller('chats')
@@ -50,14 +47,15 @@ export class ChatController {
     type: ChatListResponseDto,
   })
   async getUserChats(
-    @CurrentUser() currentUser: CurrentUserPayload,
+    @currentUserDecorator.CurrentUser()
+    currentUser: currentUserDecorator.CurrentUserPayload,
     @Query('limit') limit?: string,
     @Query('offset') offset?: string,
   ): Promise<ChatListResponseDto> {
-    return this.chatService.getUserChats(
+    return await this.chatService.getUserChats(
       currentUser.id,
-      limit ? parseInt(limit) : undefined,
-      offset ? parseInt(offset) : undefined,
+      limit ? parseInt(limit, 10) : undefined,
+      offset ? parseInt(offset, 10) : undefined,
     );
   }
 
@@ -72,9 +70,10 @@ export class ChatController {
   @ApiResponse({ status: 404, description: 'Chat not found' })
   async getChatById(
     @Param('id', ParseUUIDPipe) id: string,
-    @CurrentUser() currentUser: CurrentUserPayload,
+    @currentUserDecorator.CurrentUser()
+    currentUser: currentUserDecorator.CurrentUserPayload,
   ): Promise<ChatResponseDto> {
-    return this.chatService.getChatById(id, currentUser.id);
+    return await this.chatService.getChatById(id, currentUser.id);
   }
 
   @Post()
@@ -92,9 +91,10 @@ export class ChatController {
   @ApiResponse({ status: 404, description: 'Target user not found' })
   async createChat(
     @Body() createChatDto: CreateChatDto,
-    @CurrentUser() currentUser: CurrentUserPayload,
+    @currentUserDecorator.CurrentUser()
+    currentUser: currentUserDecorator.CurrentUserPayload,
   ): Promise<ChatResponseDto> {
-    return this.chatService.createChat(currentUser.id, createChatDto);
+    return await this.chatService.createChat(currentUser.id, createChatDto);
   }
 
   @Delete(':id')
@@ -109,9 +109,10 @@ export class ChatController {
   @ApiResponse({ status: 404, description: 'Chat not found' })
   async deleteChat(
     @Param('id', ParseUUIDPipe) id: string,
-    @CurrentUser() currentUser: CurrentUserPayload,
+    @currentUserDecorator.CurrentUser()
+    currentUser: currentUserDecorator.CurrentUserPayload,
   ): Promise<DeleteChatResponseDto> {
-    return this.chatService.deleteChat(id, currentUser.id);
+    return await this.chatService.deleteChat(id, currentUser.id);
   }
 
   @Get(':id/messages')
@@ -125,10 +126,11 @@ export class ChatController {
   @ApiResponse({ status: 404, description: 'Chat not found' })
   async getChatMessages(
     @Param('id', ParseUUIDPipe) id: string,
-    @CurrentUser() currentUser: CurrentUserPayload,
+    @currentUserDecorator.CurrentUser()
+    currentUser: currentUserDecorator.CurrentUserPayload,
     @Query() query: GetMessagesQueryDto,
   ): Promise<MessageResponseDto[]> {
-    return this.chatService.getChatMessages(id, currentUser.id, query);
+    return await this.chatService.getChatMessages(id, currentUser.id, query);
   }
 
   @Post(':id/messages')
@@ -146,10 +148,15 @@ export class ChatController {
   @ApiResponse({ status: 404, description: 'Chat not found' })
   async sendMessage(
     @Param('id', ParseUUIDPipe) id: string,
-    @CurrentUser() currentUser: CurrentUserPayload,
+    @currentUserDecorator.CurrentUser()
+    currentUser: currentUserDecorator.CurrentUserPayload,
     @Body() sendMessageDto: SendMessageDto,
   ): Promise<MessageResponseDto> {
-    return this.chatService.sendMessage(id, currentUser.id, sendMessageDto);
+    return await this.chatService.sendMessage(
+      id,
+      currentUser.id,
+      sendMessageDto,
+    );
   }
 
   @Delete('messages/:messageId')
@@ -158,9 +165,10 @@ export class ChatController {
   @ApiResponse({ status: 200, description: 'Message deleted' })
   @ApiResponse({ status: 403, description: 'Can only delete own messages' })
   @ApiResponse({ status: 404, description: 'Message not found' })
-  async deleteMessage(
+  deleteMessage(
     @Param('messageId', ParseUUIDPipe) messageId: string,
-    @CurrentUser() currentUser: CurrentUserPayload,
+    @currentUserDecorator.CurrentUser()
+    currentUser: currentUserDecorator.CurrentUserPayload,
   ): Promise<{ message: string; messageId: string }> {
     return this.chatService.deleteMessage(messageId, currentUser.id);
   }
@@ -169,8 +177,9 @@ export class ChatController {
   @ApiOperation({ summary: 'Get unread messages count' })
   @ApiResponse({ status: 200, description: 'Unread counts' })
   async getUnreadCount(
-    @CurrentUser() currentUser: CurrentUserPayload,
+    @currentUserDecorator.CurrentUser()
+    currentUser: currentUserDecorator.CurrentUserPayload,
   ): Promise<{ total: number; chats: Record<string, number> }> {
-    return this.chatService.getUnreadCount(currentUser.id);
+    return await this.chatService.getUnreadCount(currentUser.id);
   }
 }

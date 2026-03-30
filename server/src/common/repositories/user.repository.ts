@@ -5,7 +5,7 @@
 // src/common/repositories/user.repository.ts
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
-import { Prisma, User, UserSettings } from '../../generated/client';
+import { Prisma, User, UserSettings } from '@prisma/client';
 
 export type UserWithSettings = User & {
   settings: UserSettings | null;
@@ -137,7 +137,6 @@ export class UserRepository {
     });
   }
 
-  // eslint-disable-next-line prettier/prettier
   async findByCredentials(
     loginOrEmail: string,
   ): Promise<UserWithSettings | null> {
@@ -173,7 +172,7 @@ export class UserRepository {
         data.username && { username: data.username },
         data.email && { email: data.email },
         data.login && { login: data.login },
-      ].filter(Boolean),
+      ].filter(Boolean) as Prisma.UserWhereInput[],
     };
 
     if (excludeId) {

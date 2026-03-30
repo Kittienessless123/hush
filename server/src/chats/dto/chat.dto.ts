@@ -12,7 +12,8 @@ import {
   IsArray,
 } from 'class-validator';
 import { Type } from 'class-transformer';
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { forwardRef } from '@nestjs/common';
 
 // Request DTOs
 export class CreateChatDto {
@@ -107,41 +108,6 @@ export class UserInChatDto {
   lastSeen?: Date;
 }
 
-export class ChatResponseDto {
-  @ApiProperty()
-  id: string;
-
-  @ApiProperty()
-  user1Id: string;
-
-  @ApiProperty()
-  user2Id: string;
-
-  @ApiProperty({ type: () => UserInChatDto })
-  @ValidateNested()
-  @Type(() => UserInChatDto)
-  user1: UserInChatDto;
-
-  @ApiProperty({ type: () => UserInChatDto })
-  @ValidateNested()
-  @Type(() => UserInChatDto)
-  user2: UserInChatDto;
-
-  @ApiProperty()
-  createdAt: Date;
-
-  @ApiProperty()
-  updatedAt: Date;
-
-  @ApiProperty({ required: false, description: 'Last message in chat' })
-  @ValidateNested()
-  @Type(() => MessageInChatDto)
-  lastMessage?: MessageInChatDto;
-
-  @ApiProperty({ description: 'Unread messages count for current user' })
-  unreadCount?: number;
-}
-
 export class MessageInChatDto {
   @ApiProperty()
   id: string;
@@ -175,6 +141,39 @@ export class MessageInChatDto {
 }
 
 export class MessageResponseDto extends MessageInChatDto {}
+
+export class ChatResponseDto {
+  @ApiProperty()
+  id: string;
+
+  @ApiProperty()
+  user1Id: string;
+
+  @ApiProperty()
+  user2Id: string;
+
+  @ApiProperty({ type: () => UserInChatDto })
+  @ValidateNested()
+  @Type(() => UserInChatDto)
+  user1: UserInChatDto;
+
+  @ApiProperty({ type: () => UserInChatDto })
+  @ValidateNested()
+  @Type(() => UserInChatDto)
+  user2: UserInChatDto;
+
+  @ApiProperty()
+  createdAt: Date;
+
+  @ApiProperty()
+  updatedAt: Date;
+
+  @ApiPropertyOptional({ type: () => forwardRef(() => MessageInChatDto) })
+  lastMessage?: MessageInChatDto;
+
+  @ApiProperty({ description: 'Unread messages count for current user' })
+  unreadCount?: number;
+}
 
 export class ChatListResponseDto {
   @ApiProperty({ type: [ChatResponseDto] })

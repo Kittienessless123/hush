@@ -1,7 +1,7 @@
 // src/common/repositories/blacklist.repository.ts
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
-import { Blacklist, Prisma } from '../../generated/client';
+import { Blacklist, Prisma } from '@prisma/client';
 
 export interface BlacklistWithUser extends Blacklist {
   blocked: {

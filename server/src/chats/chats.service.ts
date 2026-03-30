@@ -1,3 +1,6 @@
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable @typescript-eslint/no-unsafe-argument */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 // src/chat/chat.service.ts
 import {
   Injectable,
@@ -221,7 +224,6 @@ export class ChatService {
       throw new NotFoundException(`Message with ID ${messageId} not found`);
     }
 
-    // Check if user is the sender
     if (message.senderId !== userId) {
       throw new ForbiddenException('You can only delete your own messages');
     }

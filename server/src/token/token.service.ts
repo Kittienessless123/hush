@@ -1,27 +1,24 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
-/* eslint-disable @typescript-eslint/no-unsafe-return */
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-/* eslint-disable @typescript-eslint/no-unsafe-call */
+/* eslint-disable @typescript-eslint/no-unsafe-argument */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
-// src/token/token.service.ts
-import {
-  Injectable,
-  UnauthorizedException,
-  NotFoundException,
-  ConflictException,
-} from '@nestjs/common';
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { randomBytes } from 'crypto';
 import { TokenRepository } from '../common/repositories/token.repository';
-import { TokenMapper } from './mappers/token.mapper';
-import {
-  GenerateTokenDto,
-  RefreshTokenDto,
-  RevokeTokenDto,
-  AuthTokensDto,
-  TokenResponseDto,
-} from './dto/token.dto';
+import { CurrentUserPayload } from '../common/decorators/current-user/current-user.decorator';
+
+export interface TokenPair {
+  accessToken: string;
+  refreshToken: string;
+  expiresIn: number;
+}
+
+export interface GenerateTokensOptions {
+  userId: string;
+  deviceInfo?: string;
+  ipAddress?: string;
+}
 
 @Injectable()
 export class TokenService {
@@ -29,49 +26,28 @@ export class TokenService {
     private readonly tokenRepo: TokenRepository,
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
-    private readonly mapper: TokenMapper,
   ) {}
 
-  async generateAuthTokens(payload: GenerateTokenDto): Promise<AuthTokensDto> {
+  async generateTokens(options: GenerateTokensOptions): Promise<TokenPair> {
     const accessToken = this.generateAccessToken({
-      sub: payload.userId,
-      deviceInfo: payload.deviceInfo,
+      sub: options.userId,
+      deviceInfo: options.deviceInfo,
     });
 
-    const refreshToken = await this.generateRefreshToken(payload);
+    const refreshToken = await this.generateRefreshToken({
+      userId: options.userId,
+      deviceInfo: options.deviceInfo,
+      ipAddress: options.ipAddress,
+    });
 
     return {
       accessToken,
       refreshToken: refreshToken.token,
       expiresIn: this.configService.get<number>('JWT_ACCESS_EXPIRES_IN', 3600),
-      tokenType: 'Bearer',
     };
   }
-  async getTokenPayload(token: string): Promise<any> {
-    try {
-      const payload = await this.jwtService.verifyAsync(token, {
-        secret: this.configService.get('JWT_ACCESS_SECRET'),
-      });
 
-      // Check if token is valid in database
-      if (payload.tokenId) {
-        const isValid = await this.validateToken(payload.tokenId);
-        if (!isValid) {
-          throw new UnauthorizedException('Token has been revoked');
-        }
-      }
-
-      return payload;
-    } catch (error) {
-      throw new UnauthorizedException('Invalid token');
-    }
-  }
-  async refreshTokens(
-    refreshTokenDto: RefreshTokenDto,
-  ): Promise<AuthTokensDto> {
-    const { refreshToken } = refreshTokenDto;
-
-    // Проверяем валидность refresh token
+  async refreshTokens(refreshToken: string): Promise<TokenPair> {
     const isValid = await this.tokenRepo.isTokenValid(refreshToken);
     if (!isValid) {
       throw new UnauthorizedException('Invalid or expired refresh token');
@@ -87,89 +63,58 @@ export class TokenService {
     }
 
     if (tokenEntity.expiresAt < new Date()) {
+      await this.tokenRepo.revokeToken(tokenEntity.id);
       throw new UnauthorizedException('Refresh token has expired');
     }
 
-    // Revoke old token
     await this.tokenRepo.revokeToken(tokenEntity.id);
 
-    // Generate new tokens
-    const newTokens = await this.generateAuthTokens({
+    return this.generateTokens({
       userId: tokenEntity.userId,
       deviceInfo: tokenEntity.deviceInfo ?? undefined,
     });
-
-    return newTokens;
   }
 
-  async revokeToken(
-    revokeTokenDto: RevokeTokenDto,
-  ): Promise<{ message: string }> {
-    const token = await this.tokenRepo.findUnique({
-      id: revokeTokenDto.tokenId,
-    });
-
-    if (!token) {
-      throw new NotFoundException(
-        `Token with ID ${revokeTokenDto.tokenId} not found`,
+  async validateAccessToken(token: string): Promise<CurrentUserPayload> {
+    try {
+      const payload = await this.jwtService.verifyAsync<CurrentUserPayload>(
+        token,
+        {
+          secret: this.configService.get('JWT_ACCESS_SECRET'),
+        },
       );
+
+      if (payload.tokenId) {
+        const isValid = await this.tokenRepo.isTokenValid(payload.tokenId);
+        if (!isValid) {
+          throw new UnauthorizedException('Token has been revoked');
+        }
+      }
+
+      return payload;
+    } catch (error) {
+      if (error.name === 'TokenExpiredError') {
+        throw new UnauthorizedException('Token has expired');
+      }
+      if (error.name === 'JsonWebTokenError') {
+        throw new UnauthorizedException('Invalid token');
+      }
+      throw new UnauthorizedException('Authentication failed');
     }
+  }
 
-    if (token.userId !== revokeTokenDto.userId) {
-      throw new ConflictException('Token does not belong to this user');
-    }
-
-    await this.tokenRepo.revokeToken(revokeTokenDto.tokenId);
-
-    return { message: 'Token revoked successfully' };
+  async revokeToken(tokenId: string): Promise<void> {
+    await this.tokenRepo.revokeToken(tokenId);
   }
 
   async revokeAllUserTokens(
     userId: string,
-    currentTokenId?: string,
-  ): Promise<{ message: string; count: number }> {
-    const count = await this.tokenRepo.revokeAllUserTokens(
-      userId,
-      currentTokenId,
-    );
-
-    return {
-      message: `Revoked ${count} tokens successfully`,
-      count,
-    };
+    excludeTokenId?: string,
+  ): Promise<number> {
+    return this.tokenRepo.revokeAllUserTokens(userId, excludeTokenId);
   }
 
-  async getUserTokens(userId: string): Promise<TokenResponseDto[]> {
-    const tokens = await this.tokenRepo.findUserTokens(userId);
-    return this.mapper.toTokenResponseArray(tokens);
-  }
-
-  async validateToken(tokenId: string): Promise<boolean> {
-    try {
-      const token = await this.tokenRepo.findUnique({ id: tokenId });
-      if (!token || token.revoked) {
-        return false;
-      }
-
-      if (token.expiresAt < new Date()) {
-        await this.tokenRepo.revokeToken(tokenId);
-        return false;
-      }
-
-      return true;
-    } catch {
-      return false;
-    }
-  }
-  async cleanupExpiredTokens(): Promise<{ deleted: number }> {
-    const deleted = await this.tokenRepo.deleteExpiredTokens();
-    return { deleted };
-  }
-
-  private generateAccessToken(payload: {
-    sub: string;
-    deviceInfo?: string;
-  }): string {
+  private generateAccessToken(payload: Partial<CurrentUserPayload>): string {
     return this.jwtService.sign(payload, {
       secret: this.configService.get('JWT_ACCESS_SECRET'),
       expiresIn: this.configService.get('JWT_ACCESS_EXPIRES_IN', '1h'),
@@ -177,38 +122,46 @@ export class TokenService {
   }
 
   private async generateRefreshToken(
-    payload: GenerateTokenDto,
+    options: GenerateTokensOptions,
   ): Promise<{ token: string; id: string }> {
     const refreshToken = randomBytes(40).toString('hex');
     const expiresIn = this.configService.get('JWT_REFRESH_EXPIRES_IN', '7d');
 
-    // Parse expiresIn to milliseconds
-    let expiresAt: Date;
-    if (typeof expiresIn === 'string') {
-      const value = parseInt(expiresIn);
-      if (isNaN(value)) {
-        // Handle string like '7d'
-        const days = parseInt(expiresIn);
-        expiresAt = new Date(
-          Date.now() + (isNaN(days) ? 7 : days) * 24 * 60 * 60 * 1000,
-        );
-      } else {
-        expiresAt = new Date(Date.now() + value * 1000);
-      }
-    } else {
-      expiresAt = new Date(Date.now() + expiresIn * 1000);
-    }
+    const expiresAt = this.calculateExpiryDate(expiresIn);
 
     const created = await this.tokenRepo.create({
-      userId: payload.userId,
+      userId: options.userId,
       token: refreshToken,
       expiresAt,
-      deviceInfo: payload.deviceInfo,
+      deviceInfo: options.deviceInfo,
     });
 
     return {
       token: refreshToken,
       id: created.id,
     };
+  }
+
+  private calculateExpiryDate(expiresIn: string | number): Date {
+    if (typeof expiresIn === 'number') {
+      return new Date(Date.now() + expiresIn * 1000);
+    }
+
+    const match = expiresIn.match(/^(\d+)([dhms])$/);
+    if (match) {
+      const value = parseInt(match[1]);
+      const unit = match[2];
+
+      const multipliers: Record<string, number> = {
+        d: 24 * 60 * 60 * 1000,
+        h: 60 * 60 * 1000,
+        m: 60 * 1000,
+        s: 1000,
+      };
+
+      return new Date(Date.now() + value * (multipliers[unit] || 1000));
+    }
+
+    return new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
   }
 }

@@ -1,9 +1,6 @@
-/* eslint-disable @typescript-eslint/no-redundant-type-constituents */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
-// src/common/repositories/friend.repository.ts
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
-import { Friend, FriendStatus, Prisma } from 'src/generated/client';
+import { Friend, FriendStatus, Prisma } from '@prisma/client';
 
 export interface FriendWithUsers {
   id: string;
@@ -204,8 +201,8 @@ export class FriendRepository {
   ): Promise<FriendWithUsers[]> {
     const where =
       type === 'incoming'
-        ? { friendId: userId, status: 'pending' }
-        : { userId, status: 'pending' };
+        ? { friendId: userId, status: 'pending' as FriendStatus }
+        : { userId, status: 'pending' as FriendStatus };
 
     const results = await this.prisma.friend.findMany({
       where,
