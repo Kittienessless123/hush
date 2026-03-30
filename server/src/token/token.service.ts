@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable, UnauthorizedException, Logger } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { randomBytes } from 'crypto';
@@ -22,11 +22,30 @@ export interface GenerateTokensOptions {
 
 @Injectable()
 export class TokenService {
+  private readonly logger = new Logger(TokenService.name);
+  private readonly accessTokenExpiresIn: number;
+  private readonly refreshTokenExpiresIn: number;
+
   constructor(
     private readonly tokenRepo: TokenRepository,
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
-  ) {}
+  ) {
+    // Получаем значения из .env
+    this.accessTokenExpiresIn = this.parseExpiresIn(
+      this.configService.get('JWT_ACCESS_EXPIRES_IN', '3600'),
+    );
+    this.refreshTokenExpiresIn = this.parseExpiresIn(
+      this.configService.get('JWT_REFRESH_EXPIRES_IN', '604800'),
+    );
+
+    this.logger.log(
+      `Access token expires in: ${this.accessTokenExpiresIn} seconds`,
+    );
+    this.logger.log(
+      `Refresh token expires in: ${this.refreshTokenExpiresIn} seconds`,
+    );
+  }
 
   async generateTokens(options: GenerateTokensOptions): Promise<TokenPair> {
     const accessToken = this.generateAccessToken({
@@ -43,7 +62,7 @@ export class TokenService {
     return {
       accessToken,
       refreshToken: refreshToken.token,
-      expiresIn: this.configService.get<number>('JWT_ACCESS_EXPIRES_IN', 3600),
+      expiresIn: this.accessTokenExpiresIn,
     };
   }
 
@@ -117,7 +136,7 @@ export class TokenService {
   private generateAccessToken(payload: Partial<CurrentUserPayload>): string {
     return this.jwtService.sign(payload, {
       secret: this.configService.get('JWT_ACCESS_SECRET'),
-      expiresIn: this.configService.get('JWT_ACCESS_EXPIRES_IN', '1h'),
+      expiresIn: this.accessTokenExpiresIn, // Используем число секунд
     });
   }
 
@@ -125,9 +144,9 @@ export class TokenService {
     options: GenerateTokensOptions,
   ): Promise<{ token: string; id: string }> {
     const refreshToken = randomBytes(40).toString('hex');
-    const expiresIn = this.configService.get('JWT_REFRESH_EXPIRES_IN', '7d');
-
-    const expiresAt = this.calculateExpiryDate(expiresIn);
+    const expiresAt = this.calculateExpiryDateFromSeconds(
+      this.refreshTokenExpiresIn,
+    );
 
     const created = await this.tokenRepo.create({
       userId: options.userId,
@@ -142,6 +161,53 @@ export class TokenService {
     };
   }
 
+  /**
+   * Преобразует строку вида "1h", "30m", "7d" или число в секунды
+   */
+  private parseExpiresIn(expiresIn: string | number): number {
+    if (typeof expiresIn === 'number') {
+      return expiresIn;
+    }
+
+    // Если строка, пытаемся распарсить
+    const match = expiresIn.match(/^(\d+)([dhms])?$/);
+    if (!match) {
+      // Если не удалось распарсить, возвращаем значение по умолчанию
+      this.logger.warn(
+        `Invalid expiresIn format: ${expiresIn}, using default 3600 seconds`,
+      );
+      return 3600;
+    }
+
+    const value = parseInt(match[1]);
+    const unit = match[2];
+
+    if (!unit) {
+      // Если нет единицы измерения, считаем что это секунды
+      return value;
+    }
+
+    const multipliers: Record<string, number> = {
+      s: 1,
+      m: 60,
+      h: 3600,
+      d: 86400,
+    };
+
+    return value * (multipliers[unit] || 1);
+  }
+
+  /**
+   * Создает дату истечения на основе количества секунд
+   */
+  private calculateExpiryDateFromSeconds(seconds: number): Date {
+    return new Date(Date.now() + seconds * 1000);
+  }
+
+  /**
+   * Оставлен для обратной совместимости, но не используется
+   * @deprecated Используйте calculateExpiryDateFromSeconds
+   */
   private calculateExpiryDate(expiresIn: string | number): Date {
     if (typeof expiresIn === 'number') {
       return new Date(Date.now() + expiresIn * 1000);

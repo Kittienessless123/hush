@@ -57,6 +57,7 @@ pids
 report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
 
 server/dist/
+server/dist/src
 server/node_modules/
 server/.env
 server/prisma/*.db

@@ -44,24 +44,20 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AuthService = void 0;
 const common_1 = require("@nestjs/common");
-const jwt_1 = require("@nestjs/jwt");
-const config_1 = require("@nestjs/config");
 const bcrypt = __importStar(require("bcrypt"));
-const crypto_1 = require("crypto");
 const user_repository_1 = require("../common/repositories/user.repository");
 const token_repository_1 = require("../common/repositories/token.repository");
+const token_service_1 = require("../token/token.service");
 const user_mapper_1 = require("../users/mappers/user.mapper");
 let AuthService = class AuthService {
     userRepo;
     tokenRepo;
-    jwtService;
-    configService;
+    tokenService;
     userMapper;
-    constructor(userRepo, tokenRepo, jwtService, configService, userMapper) {
+    constructor(userRepo, tokenRepo, tokenService, userMapper) {
         this.userRepo = userRepo;
         this.tokenRepo = tokenRepo;
-        this.jwtService = jwtService;
-        this.configService = configService;
+        this.tokenService = tokenService;
         this.userMapper = userMapper;
     }
     async register(registerDto) {
@@ -81,9 +77,16 @@ let AuthService = class AuthService {
             email: registerDto.email,
             publicKey: registerDto.publicKey,
         });
-        const tokens = await this.generateTokens(user.id, undefined);
+        const tokens = await this.tokenService.generateTokens({
+            userId: user.id,
+            deviceInfo: undefined,
+            ipAddress: undefined,
+        });
         return {
-            ...tokens,
+            accessToken: tokens.accessToken,
+            refreshToken: tokens.refreshToken,
+            expiresIn: tokens.expiresIn,
+            tokenType: 'Bearer',
             user: {
                 id: user.id,
                 username: user.username,
@@ -103,9 +106,16 @@ let AuthService = class AuthService {
         if (!isPasswordValid) {
             throw new common_1.UnauthorizedException('Invalid credentials');
         }
-        const tokens = await this.generateTokens(user.id, deviceInfo, ipAddress);
+        const tokens = await this.tokenService.generateTokens({
+            userId: user.id,
+            deviceInfo,
+            ipAddress,
+        });
         return {
-            ...tokens,
+            accessToken: tokens.accessToken,
+            refreshToken: tokens.refreshToken,
+            expiresIn: tokens.expiresIn,
+            tokenType: 'Bearer',
             user: {
                 id: user.id,
                 username: user.username,
@@ -117,32 +127,13 @@ let AuthService = class AuthService {
     }
     async refresh(refreshTokenDto) {
         const { refreshToken } = refreshTokenDto;
-        const tokenEntity = await this.tokenRepo.findByToken(refreshToken);
-        if (!tokenEntity) {
-            throw new common_1.UnauthorizedException('Invalid refresh token');
-        }
-        if (tokenEntity.revoked) {
-            throw new common_1.UnauthorizedException('Refresh token has been revoked');
-        }
-        if (tokenEntity.expiresAt < new Date()) {
-            await this.tokenRepo.revokeToken(tokenEntity.id);
-            throw new common_1.UnauthorizedException('Refresh token has expired');
-        }
-        try {
-            const payload = await this.jwtService.verifyAsync(refreshToken, {
-                secret: this.configService.get('JWT_REFRESH_SECRET'),
-            });
-            await this.tokenRepo.revokeToken(tokenEntity.id);
-            const tokens = await this.generateTokens(payload.sub, tokenEntity.deviceInfo ?? undefined);
-            return tokens;
-        }
-        catch (error) {
-            if (error.name === 'TokenExpiredError') {
-                await this.tokenRepo.revokeToken(tokenEntity.id);
-                throw new common_1.UnauthorizedException('Refresh token has expired');
-            }
-            throw new common_1.UnauthorizedException('Invalid refresh token');
-        }
+        const tokens = await this.tokenService.refreshTokens(refreshToken);
+        return {
+            accessToken: tokens.accessToken,
+            refreshToken: tokens.refreshToken,
+            expiresIn: tokens.expiresIn,
+            tokenType: 'Bearer',
+        };
     }
     async logout(logoutDto) {
         const { refreshToken } = logoutDto;
@@ -189,49 +180,13 @@ let AuthService = class AuthService {
             email: user.email,
         };
     }
-    async generateTokens(userId, deviceInfo, ipAddress) {
-        const accessToken = this.jwtService.sign({
-            sub: userId,
-            deviceInfo,
-        }, {
-            secret: this.configService.get('JWT_ACCESS_SECRET'),
-            expiresIn: this.configService.get('JWT_ACCESS_EXPIRES_IN', '1h'),
-        });
-        const refreshToken = (0, crypto_1.randomBytes)(40).toString('hex');
-        const expiresInDays = this.configService.get('JWT_REFRESH_EXPIRES_IN', '7d');
-        let expiresAt;
-        if (typeof expiresInDays === 'string' && expiresInDays.endsWith('d')) {
-            const days = parseInt(expiresInDays);
-            expiresAt = new Date(Date.now() + days * 24 * 60 * 60 * 1000);
-        }
-        else {
-            const seconds = parseInt(expiresInDays);
-            expiresAt = new Date(Date.now() + seconds * 1000);
-        }
-        await this.tokenRepo.create({
-            userId,
-            token: refreshToken,
-            expiresAt,
-            deviceInfo,
-            ipAddress,
-        });
-        const expiresIn = this.configService.get('JWT_ACCESS_EXPIRES_IN', 3600);
-        const expiresInSeconds = typeof expiresIn === 'string' ? parseInt(expiresIn) : expiresIn;
-        return {
-            accessToken,
-            refreshToken,
-            expiresIn: expiresInSeconds,
-            tokenType: 'Bearer',
-        };
-    }
 };
 exports.AuthService = AuthService;
 exports.AuthService = AuthService = __decorate([
     (0, common_1.Injectable)(),
     __metadata("design:paramtypes", [user_repository_1.UserRepository,
         token_repository_1.TokenRepository,
-        jwt_1.JwtService,
-        config_1.ConfigService,
+        token_service_1.TokenService,
         user_mapper_1.UserMapper])
 ], AuthService);
 //# sourceMappingURL=auth.service.js.map

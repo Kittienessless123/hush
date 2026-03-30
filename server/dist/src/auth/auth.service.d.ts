@@ -1,16 +1,14 @@
-import { JwtService } from '@nestjs/jwt';
-import { ConfigService } from '@nestjs/config';
 import { UserRepository } from '../common/repositories/user.repository';
 import { TokenRepository } from '../common/repositories/token.repository';
+import { TokenService } from '../token/token.service';
 import { UserMapper } from '../users/mappers/user.mapper';
 import { LoginDto, RegisterDto, RefreshTokenDto, LogoutDto, ForgotPasswordDto, AuthResponseDto, TokenResponseDto, MessageResponseDto } from './dto/auth.dto';
 export declare class AuthService {
     private readonly userRepo;
     private readonly tokenRepo;
-    private readonly jwtService;
-    private readonly configService;
+    private readonly tokenService;
     private readonly userMapper;
-    constructor(userRepo: UserRepository, tokenRepo: TokenRepository, jwtService: JwtService, configService: ConfigService, userMapper: UserMapper);
+    constructor(userRepo: UserRepository, tokenRepo: TokenRepository, tokenService: TokenService, userMapper: UserMapper);
     register(registerDto: RegisterDto): Promise<AuthResponseDto>;
     login(loginDto: LoginDto): Promise<AuthResponseDto>;
     refresh(refreshTokenDto: RefreshTokenDto): Promise<TokenResponseDto>;
@@ -24,5 +22,4 @@ export declare class AuthService {
         login: string;
         email: string | null;
     } | null>;
-    private generateTokens;
 }
