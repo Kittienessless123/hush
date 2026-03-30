@@ -61,7 +61,14 @@ server/node_modules/
 server/.env
 server/prisma/*.db
 server/prisma/*.db-journal
-
+# SSL certificates
+ssl/
+server/ssl/
+*.pem
+*.key
+*.crt
+*.cert
+EOF
 # Client (если есть)
 client/dist/
 client/node_modules/
