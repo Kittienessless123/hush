@@ -1,4 +1,3 @@
-// router/index.tsx
 import {
   RouterProvider,
   Navigate,
@@ -50,7 +49,6 @@ export const AppRouter = () => {
           ],
         },
 
-        // Приватные роуты (доступны только авторизованным)
         {
           element: <ProtectedRoute />,
           children: [

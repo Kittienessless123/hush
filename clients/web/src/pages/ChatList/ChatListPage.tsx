@@ -1,4 +1,3 @@
-// pages/ChatListPage.tsx
 import { ChatList } from "../../components/chat/ChatList";
 import { observer } from "mobx-react-lite";
 import { Flex, Typography, Divider, Dropdown, Button } from "antd";

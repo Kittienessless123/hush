@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
-// src/auth/auth.service.ts
 import {
   Injectable,
   UnauthorizedException,
@@ -34,7 +33,6 @@ export class AuthService {
   ) {}
 
   async register(registerDto: RegisterDto): Promise<AuthResponseDto> {
-    // Check if user exists
     const { isUnique, conflictField } = await this.userRepo.checkUnique({
       login: registerDto.login,
       username: registerDto.username,
@@ -47,10 +45,8 @@ export class AuthService {
       );
     }
 
-    // Hash password
     const hashedPassword = await bcrypt.hash(registerDto.password, 10);
 
-    // Create user
     const user = await this.userRepo.create({
       username: registerDto.username,
       login: registerDto.login,
@@ -59,7 +55,6 @@ export class AuthService {
       publicKey: registerDto.publicKey,
     });
 
-    // Generate tokens using TokenService
     const tokens = await this.tokenService.generateTokens({
       userId: user.id,
       deviceInfo: undefined,
@@ -84,19 +79,16 @@ export class AuthService {
   async login(loginDto: LoginDto): Promise<AuthResponseDto> {
     const { identifier, password, deviceInfo, ipAddress } = loginDto;
 
-    // Find user by email or login
     const user = await this.userRepo.findByCredentials(identifier);
     if (!user) {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    // Verify password
     const isPasswordValid = await bcrypt.compare(password, user.passwordHash);
     if (!isPasswordValid) {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    // Generate tokens using TokenService
     const tokens = await this.tokenService.generateTokens({
       userId: user.id,
       deviceInfo,
@@ -121,25 +113,30 @@ export class AuthService {
   async refresh(refreshTokenDto: RefreshTokenDto): Promise<TokenResponseDto> {
     const { refreshToken } = refreshTokenDto;
 
-    // Use TokenService for refresh
     const tokens = await this.tokenService.refreshTokens(refreshToken);
 
     return {
       accessToken: tokens.accessToken,
       refreshToken: tokens.refreshToken,
       expiresIn: tokens.expiresIn,
-      tokenType: 'Bearer', // 👈 ДОБАВЬТЕ ЭТО
+      tokenType: 'Bearer',
     };
   }
+
   async logout(logoutDto: LogoutDto): Promise<MessageResponseDto> {
     const { refreshToken } = logoutDto;
-
-    // Find and revoke the refresh token
     const tokenEntity = await this.tokenRepo.findByToken(refreshToken);
-    if (tokenEntity) {
-      await this.tokenRepo.revokeToken(tokenEntity.id);
+
+    if (!tokenEntity) {
+      return { message: 'Logged out successfully' };
     }
 
+    if (tokenEntity.revoked) {
+      return { message: 'Logged out successfully' };
+    }
+
+    await this.tokenRepo.revokeToken(tokenEntity.id);
+    const checkToken = await this.tokenRepo.findByToken(refreshToken);
     return { message: 'Logged out successfully' };
   }
 

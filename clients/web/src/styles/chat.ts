@@ -1,5 +1,3 @@
-// /styles/chat.ts
-// /styles/chat.ts
 import type { CSSProperties } from 'react';
 import type { Theme } from './theme';
 

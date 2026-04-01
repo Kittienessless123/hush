@@ -1,7 +1,6 @@
 import type { CSSProperties } from 'react';
 import type { Theme } from './theme';
 
-// Заголовки форм
 export const getFormTitleStyle = (theme: Theme): CSSProperties => ({
   textAlign: 'center',
   color: theme.textSecondary,
@@ -13,7 +12,6 @@ export const getFormTitleStyle = (theme: Theme): CSSProperties => ({
   textTransform: 'uppercase',
 });
 
-// Логотип HUSH
 export const getHushLogoStyle = (theme: Theme): CSSProperties => ({
   fontFamily: "'Six Caps', sans-serif",
   fontWeight: 200,
@@ -27,7 +25,6 @@ export const getHushLogoStyle = (theme: Theme): CSSProperties => ({
   transform: 'scaleX(0.6)',
 });
 
-// Заголовки страниц
 export const getPageTitleStyle = (theme: Theme): CSSProperties => ({
   margin: 0,
   color: theme.text,

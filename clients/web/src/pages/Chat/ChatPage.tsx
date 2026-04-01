@@ -1,4 +1,3 @@
-// pages/ChatPage.tsx
 import { ChatHeader } from "../../components/chat/ChatHeader";
 import { MessageList } from "../../components/chat/MessageList";
 import { MessageInput } from "../../components/chat/MessageInput";
@@ -15,10 +14,8 @@ export const ChatPage = observer(() => {
 
   return (
     <Flex style={getThreeColumnLayout(theme)}>
-      {/* Левая пустая треть */}
       <div style={{ flex: 1 }} />
 
-      {/* Центральная треть с чатом */}
       <Flex
         style={{
           ...getCenterColumn(theme),
@@ -46,7 +43,6 @@ export const ChatPage = observer(() => {
         {showChatInfo && <ChatInfo onClose={() => setShowChatInfo(false)} />}
       </Flex>
 
-      {/* Правая пустая треть */}
       <div style={{ flex: 1 }} />
     </Flex>
   );

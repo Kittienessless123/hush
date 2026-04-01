@@ -5,7 +5,6 @@ import { themes } from "../../styles/theme";
 import { ThemeContext } from "../../hooks/useTheme";
 
 interface IProviders {
-  /** Content that will be wrapped by providers. */
   readonly children: ReactNode;
 }
 
@@ -33,7 +32,6 @@ export const Providers: FC<IProviders> = ({ children }) => {
 
   const currentTheme = isDark ? themes.dark : themes.light;
 
-  // Конфигурация Ant Design
   const antdThemeConfig = {
     algorithm: isDark ? antTheme.darkAlgorithm : antTheme.defaultAlgorithm,
     token: {

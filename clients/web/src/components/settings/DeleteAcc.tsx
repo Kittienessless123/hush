@@ -1,17 +1,29 @@
 import { DeleteOutlined } from "@ant-design/icons";
-import { Button, Flex, Typography, message, Popconfirm } from "antd";
+import { Button, Flex, Typography,  Popconfirm, App } from "antd";
+import { observer } from "mobx-react-lite";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import { useAuthStore, useUserStore } from "../../hooks/useStore";
 
 const { Text } = Typography;
 
-export const DeleteAcc = () => {
+export const DeleteAcc = observer(() => {
   const { t } = useTranslation("settings");
+  const { message: appMessage } = App.useApp();
   const navigate = useNavigate();
+  const { logout } = useAuthStore();
+  const { deleteAccount, isLoading } = useUserStore();
 
-  const onDeleteAccount = () => {
-    message.error(t("accountDeleted"));
-    navigate("/");
+  const onDeleteAccount = async () => {
+    try {
+      await deleteAccount();
+      await logout();
+      appMessage.success(t("accountDeleted"));
+      navigate("/login");
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    } catch (error) {
+      appMessage.error(t("deleteAccountError"));
+    }
   };
 
   return (
@@ -23,11 +35,12 @@ export const DeleteAcc = () => {
         onConfirm={onDeleteAccount}
         okText={t("delete")}
         cancelText={t("cancel")}
-        okButtonProps={{ danger: true }}
+        okButtonProps={{ danger: true, loading: isLoading }}
       >
         <Button 
           icon={<DeleteOutlined />}
           danger
+          loading={isLoading}
           style={{
             backgroundColor: "transparent",
             border: "1px solid #ff4d4f",
@@ -37,4 +50,4 @@ export const DeleteAcc = () => {
       </Popconfirm>
     </Flex>
   );
-};
+});

@@ -1,25 +1,30 @@
 import { Flex, Switch, Typography } from "antd";
-import { useState } from "react";
+import { observer } from "mobx-react-lite";
 import { useTranslation } from "react-i18next";
+import { useSettingsStore } from "../../hooks/useStore";
 import { useTheme } from "../../hooks/useTheme";
 
 const { Text } = Typography;
 
-export const Notification = () => {
+export const Notification = observer(() => {
   const { t } = useTranslation("settings");
   const { theme } = useTheme();
-  const [enabled, setEnabled] = useState(true);
+  const { settings, updateNotifications } = useSettingsStore();
+
+  const handleToggle = (checked: boolean) => {
+    updateNotifications('sound', checked);
+  };
 
   return (
     <Flex align="center" justify="space-between" style={{ padding: "8px 0" }}>
       <Text style={{ color: theme.text }}>{t("notifications")}</Text>
       <Switch 
-        checked={enabled}
-        onChange={setEnabled}
+        checked={settings.notifications.sound}
+        onChange={handleToggle}
         style={{ 
-          backgroundColor: enabled ? theme.textSecondary : theme.border,
+          backgroundColor: settings.notifications.sound ? theme.textSecondary : theme.border,
         }}
       />
     </Flex>
   );
-};
+});

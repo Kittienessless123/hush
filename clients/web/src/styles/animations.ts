@@ -1,11 +1,9 @@
-// Общие анимации
 export const transitions = {
   default: 'all 0.3s ease',
   fast: 'all 0.15s ease',
   slow: 'all 0.5s ease',
 };
 
-// Ключевые кадры для глобальных анимаций
 export const keyframes = {
   fadeIn: `
     @keyframes fadeIn {

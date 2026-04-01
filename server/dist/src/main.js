@@ -8,6 +8,7 @@ async function bootstrap() {
     app.setGlobalPrefix('api');
     app.enableCors({
         origin: [
+            'http://localhost:5173',
             'https://hush.local:8443',
             'http://hush.local:8080',
             'http://localhost:3000',

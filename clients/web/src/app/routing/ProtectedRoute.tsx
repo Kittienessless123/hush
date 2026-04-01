@@ -1,12 +1,16 @@
-// src/components/common/ProtectedRoute.tsx
+// router/ProtectedRoute.tsx
 import { Navigate, Outlet } from "react-router-dom";
-//import { useAuthStore } from "../../hooks/useStore";
+import { useAuthStore } from "../../hooks/useStore";
+import { Fallback } from "../../components/common/Fallback";
 
 export const ProtectedRoute = () => {
-  //const { user } = useAuthStore();
-  const isAuth = true;
+  const { isAuthenticated, isLoading } = useAuthStore();
 
-  if (!isAuth) {
+  if (isLoading) {
+    return <Fallback />;
+  }
+
+  if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
   }
 

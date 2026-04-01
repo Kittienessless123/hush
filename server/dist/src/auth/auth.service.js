@@ -138,9 +138,14 @@ let AuthService = class AuthService {
     async logout(logoutDto) {
         const { refreshToken } = logoutDto;
         const tokenEntity = await this.tokenRepo.findByToken(refreshToken);
-        if (tokenEntity) {
-            await this.tokenRepo.revokeToken(tokenEntity.id);
+        if (!tokenEntity) {
+            return { message: 'Logged out successfully' };
         }
+        if (tokenEntity.revoked) {
+            return { message: 'Logged out successfully' };
+        }
+        await this.tokenRepo.revokeToken(tokenEntity.id);
+        const checkToken = await this.tokenRepo.findByToken(refreshToken);
         return { message: 'Logged out successfully' };
     }
     async logoutAll(userId) {

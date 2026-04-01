@@ -1,6 +1,5 @@
-import type { Message } from './api.types';
+import type { Message } from "./api.types";
 
-// REST запросы
 export interface SendMessageRequest {
   content: string;
   file?: File;
@@ -9,70 +8,63 @@ export interface SendMessageRequest {
 export interface GetMessagesParams {
   limit?: number;
   offset?: number;
-  before?: string; // ID сообщения, до которого загружать (для пагинации)
+  before?: string;
 }
 
-// WebSocket события
 export interface SocketMessageEvents {
-  // Отправка сообщения
-  'message:send': {
+  "message:send": {
     chatId: string;
     content: string;
-    tempId?: string; // временный ID для оптимистичных обновлений
+    tempId?: string;
   };
-  
-  'message:send:ack': {
+
+  "message:send:ack": {
     tempId: string;
     message: Message;
   };
 
-  // Редактирование
-  'message:edit': {
+  "message:edit": {
     messageId: string;
     content: string;
   };
-  
-  'message:edit:ack': Message;
 
-  // Удаление
-  'message:delete': {
+  "message:edit:ack": Message;
+
+  "message:delete": {
     messageId: string;
   };
-  
-  'message:delete:ack': {
+
+  "message:delete:ack": {
     messageId: string;
     chatId: string;
   };
 
-  // Прочтение
-  'message:read': {
+  "message:read": {
     chatId: string;
     messageId: string;
   };
-  
-  'message:read:ack': {
+
+  "message:read:ack": {
     messageId: string;
     userId: string;
     chatId: string;
   };
 
-  // Новые сообщения (от сервера)
-  'message:new': Message;
-  'message:updated': Message;
-  'message:deleted': {
+  "message:new": Message;
+  "message:updated": Message;
+  "message:deleted": {
     messageId: string;
     chatId: string;
   };
 }
 
-// Статус печатания
 export interface TypingEvents {
-  'user:typing': {
+  "user:typing": {
     chatId: string;
     isTyping: boolean;
   };
-  
-  'user:typing:notification': {
+
+  "user:typing:notification": {
     userId: string;
     chatId: string;
     isTyping: boolean;

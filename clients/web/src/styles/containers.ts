@@ -1,7 +1,6 @@
 import type { CSSProperties } from 'react';
 import type { Theme } from './theme';
 
-// Основной контейнер с тремя колонками (используется в чатах, профиле)
 export const getThreeColumnLayout = (theme: Theme): CSSProperties => ({
   minHeight: 'calc(100vh - 70px)',
   backgroundColor: theme.background,
@@ -16,7 +15,6 @@ export const getCenterColumn = (theme: Theme): CSSProperties => ({
   borderRight: `1px solid ${theme.divider}`,
 });
 
-// Контейнер для форм (логин, регистрация)
 export const getFormContainer = (theme: Theme): CSSProperties => ({
   display: 'flex',
   justifyContent: 'center',
@@ -37,7 +35,6 @@ export const getFormCard = (theme: Theme): CSSProperties => ({
   backdropFilter: 'blur(10px)',
 });
 
-// Флекс-контейнеры
 export const flexCenter: CSSProperties = {
   display: 'flex',
   alignItems: 'center',

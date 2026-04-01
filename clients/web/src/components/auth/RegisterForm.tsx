@@ -1,64 +1,57 @@
-// components/auth/RegisterForm.tsx
-import { Button, Form, Input, Select, Typography, message } from "antd";
+import { Button, Form, Input, Typography, message } from "antd";
 import { observer } from "mobx-react-lite";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
-import { useTheme } from "../../hooks/useTheme"  ;
+import { useTheme } from "../../hooks/useTheme";
 import { getFormContainer, getFormCard } from "../../styles/containers";
 import { getFormTitleStyle } from "../../styles/typography";
-import { 
-  getInputStyle, 
-  getLabelStyle, 
-  getButtonStyle, 
-  getSelectStyle,
-  inputFocusStyles, 
+import {
+  getInputStyle,
+  getLabelStyle,
+  getButtonStyle,
+  inputFocusStyles,
   buttonHoverStyles,
-  getSelectDropdownStyles 
 } from "../../styles/forms";
+import { useAuthStore } from "../../hooks/useStore";
 
 const { Title } = Typography;
 
 type FieldType = {
   username?: string;
+  login?: string; 
+  email?: string; 
   password?: string;
   confirmPassword?: string;
-  gender?: string;
-  note?: string;
-  customizeGender?: string;
 };
 
 export const RegisterForm = observer(() => {
   const { t } = useTranslation("system");
   const navigate = useNavigate();
   const { theme } = useTheme();
+  const { register } = useAuthStore();
   const [loading, setLoading] = useState(false);
   const [form] = Form.useForm();
 
-  const onGenderChange = (value: string) => {
-    switch (value) {
-      case "male":
-        form.setFieldsValue({ note: t("maleGreeting") });
-        break;
-      case "female":
-        form.setFieldsValue({ note: t("femaleGreeting") });
-        break;
-      case "other":
-        form.setFieldsValue({ note: t("otherGreeting") });
-        break;
-      default:
-    }
-  };
-
   const onFinish = async (values: FieldType) => {
+    if (!values.username || !values.login || !values.email || !values.password)
+      return;
+
     setLoading(true);
     try {
-      console.log("Success:", values);
+      await register(
+        values.username,
+        values.login,
+        values.email,
+        values.password,
+      );
       message.success(t("registerSuccess"));
-      setTimeout(() => navigate("/login"), 1000);
-    } catch (error) {
+      setTimeout(() => navigate("/login"), 1500);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (error: any) {
       console.error("Register error:", error);
-      message.error(t("registerError"));
+      const errorMessage = error.response?.data?.message || t("registerError");
+      message.error(errorMessage);
       form.setFieldsValue({
         password: "",
         confirmPassword: "",
@@ -75,7 +68,7 @@ export const RegisterForm = observer(() => {
   };
 
   const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
-    e.currentTarget.style.boxShadow = 'none';
+    e.currentTarget.style.boxShadow = "none";
     e.currentTarget.style.borderColor = theme.border;
   };
 
@@ -92,7 +85,7 @@ export const RegisterForm = observer(() => {
 
   return (
     <div style={getFormContainer(theme)}>
-      <div style={{ ...getFormCard(theme), maxWidth: '500px' }}>
+      <div style={{ ...getFormCard(theme), maxWidth: "500px" }}>
         <Title level={2} style={getFormTitleStyle(theme)}>
           {t("registerTitle")}
         </Title>
@@ -111,6 +104,8 @@ export const RegisterForm = observer(() => {
             rules={[
               { required: true, message: t("usernameRequired") },
               { min: 3, message: t("usernameMinLength") },
+              { max: 20, message: t("usernameMaxLength") },
+              { pattern: /^[a-zA-Z0-9_]+$/, message: t("usernameInvalid") },
             ]}
           >
             <Input
@@ -122,11 +117,50 @@ export const RegisterForm = observer(() => {
           </Form.Item>
 
           <Form.Item
+            label={<span style={getLabelStyle(theme)}>{t("login")}</span>}
+            name="login"
+            rules={[
+              { required: true, message: t("loginRequired") },
+              { min: 3, message: t("loginMinLength") },
+              { max: 20, message: t("loginMaxLength") },
+              { pattern: /^[a-zA-Z0-9_]+$/, message: t("loginInvalid") },
+            ]}
+          >
+            <Input
+              style={getInputStyle(theme)}
+              placeholder={t("login")}
+              onFocus={handleFocus}
+              onBlur={handleBlur}
+            />
+          </Form.Item>
+
+          <Form.Item
+            label={<span style={getLabelStyle(theme)}>{t("email")}</span>}
+            name="email"
+            rules={[
+              { required: true, message: t("emailRequired") },
+              { type: "email", message: t("emailInvalid") },
+            ]}
+          >
+            <Input
+              style={getInputStyle(theme)}
+              placeholder={t("email")}
+              onFocus={handleFocus}
+              onBlur={handleBlur}
+            />
+          </Form.Item>
+
+          <Form.Item
             label={<span style={getLabelStyle(theme)}>{t("password")}</span>}
             name="password"
             rules={[
               { required: true, message: t("passwordRequired") },
-              { min: 6, message: t("passwordMinLength") },
+              { min: 8, message: t("passwordMinLength") },
+              {
+                pattern:
+                  /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/,
+                message: t("passwordRequirements"),
+              },
             ]}
           >
             <Input.Password
@@ -138,7 +172,9 @@ export const RegisterForm = observer(() => {
           </Form.Item>
 
           <Form.Item
-            label={<span style={getLabelStyle(theme)}>{t("confirmPassword")}</span>}
+            label={
+              <span style={getLabelStyle(theme)}>{t("confirmPassword")}</span>
+            }
             name="confirmPassword"
             dependencies={["password"]}
             rules={[
@@ -161,63 +197,6 @@ export const RegisterForm = observer(() => {
             />
           </Form.Item>
 
-          <Form.Item
-            label={<span style={getLabelStyle(theme)}>{t("note")}</span>}
-            name="note"
-            rules={[{ required: true, message: t("noteRequired") }]}
-          >
-            <Input
-              style={getInputStyle(theme)}
-              placeholder={t("note")}
-              onFocus={handleFocus}
-              onBlur={handleBlur}
-            />
-          </Form.Item>
-
-          <Form.Item
-            label={<span style={getLabelStyle(theme)}>{t("gender")}</span>}
-            name="gender"
-            rules={[{ required: true, message: t("genderRequired") }]}
-          >
-            <Select
-              popupClassName="custom-select-dropdown"
-              placeholder={t("selectGender")}
-              onChange={onGenderChange}
-              style={getSelectStyle(theme)}
-              options={[
-                { label: t("male"), value: "male" },
-                { label: t("female"), value: "female" },
-                { label: t("other"), value: "other" },
-              ]}
-            />
-          </Form.Item>
-
-          <Form.Item
-            noStyle
-            shouldUpdate={(prevValues, currentValues) =>
-              prevValues.gender !== currentValues.gender
-            }
-          >
-            {({ getFieldValue }) =>
-              getFieldValue("gender") === "other" ? (
-                <Form.Item
-                  label={<span style={getLabelStyle(theme)}>{t("customizeGender")}</span>}
-                  name="customizeGender"
-                  rules={[
-                    { required: true, message: t("customizeGenderRequired") },
-                  ]}
-                >
-                  <Input
-                    style={getInputStyle(theme)}
-                    placeholder={t("customizeGender")}
-                    onFocus={handleFocus}
-                    onBlur={handleBlur}
-                  />
-                </Form.Item>
-              ) : null
-            }
-          </Form.Item>
-
           <Form.Item>
             <Button
               type="primary"
@@ -232,8 +211,6 @@ export const RegisterForm = observer(() => {
           </Form.Item>
         </Form>
       </div>
-
-      <style>{getSelectDropdownStyles(theme)}</style>
     </div>
   );
 });

@@ -95,7 +95,7 @@ export class RefreshTokenDto {
 
 export class LogoutDto {
   @ApiProperty({ description: 'Refresh token to revoke' })
-  @IsJWT()
+  @IsString()
   refreshToken: string;
 }
 

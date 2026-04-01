@@ -1,4 +1,3 @@
-// pages/Settings/SettingsPage.tsx
 import { Settings } from "../../components/settings/Settings";
 import { observer } from "mobx-react-lite";
 import { Flex } from "antd";
@@ -8,14 +7,17 @@ export const SettingsPage = observer(() => {
   const { theme } = useTheme();
 
   return (
-    <Flex style={{ minHeight: "calc(100vh - 70px)", backgroundColor: theme.background }}>
-      {/* Левая пустая треть */}
+    <Flex
+      style={{
+        minHeight: "calc(100vh - 70px)",
+        backgroundColor: theme.background,
+      }}
+    >
       <div style={{ flex: 1 }} />
-      
-      {/* Центральная треть с настройками */}
-      <Flex 
-        vertical 
-        style={{ 
+
+      <Flex
+        vertical
+        style={{
           flex: "0 0 33.333%",
           maxWidth: "500px",
           width: "100%",
@@ -24,8 +26,7 @@ export const SettingsPage = observer(() => {
       >
         <Settings />
       </Flex>
-      
-      {/* Правая пустая треть */}
+
       <div style={{ flex: 1 }} />
     </Flex>
   );

@@ -1,22 +1,37 @@
-import { Button, Flex, Form, Input, message } from "antd";
+import { Button, Flex, Form, Input,  App } from "antd";
 import { useState } from "react";
+import { observer } from "mobx-react-lite";
 import { useTranslation } from "react-i18next";
 import { useTheme } from "../../hooks/useTheme";
+import { useAuthStore } from "../../hooks/useStore";
 import { getInputStyle, getButtonStyle, getLabelStyle, buttonHoverStyles, inputFocusStyles } from "../../styles/forms";
 
-export const ChangePwd = () => {
+export const ChangePwd = observer(() => {
   const { t } = useTranslation("settings");
   const { theme } = useTheme();
+  const { message } = App.useApp();
+  const { changePassword } = useAuthStore();
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
 
-  const onFinish = () => {
+  const onFinish = async (values: { oldPassword: string; newPassword: string; confirmPassword: string }) => {
+    if (values.newPassword !== values.confirmPassword) {
+      message.error(t("passwordsDoNotMatch"));
+      return;
+    }
+
     setLoading(true);
-    setTimeout(() => {
+    try {
+      await changePassword(values.oldPassword, values.newPassword);
       message.success(t("passwordChanged"));
       form.resetFields();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (error: any) {
+      const errorMessage = error.response?.data?.message || t("passwordChangeError");
+      message.error(errorMessage);
+    } finally {
       setLoading(false);
-    }, 1000);
+    }
   };
 
   const handleFocus = (e: React.FocusEvent<HTMLInputElement>) => {
@@ -52,7 +67,10 @@ export const ChangePwd = () => {
         <Form.Item
           label={<span style={getLabelStyle(theme)}>{t("oldPassword")}</span>}
           name="oldPassword"
-          rules={[{ required: true, message: t("oldPasswordRequired") }]}
+          rules={[
+            { required: true, message: t("oldPasswordRequired") },
+            { min: 8, message: t("passwordMinLength") }
+          ]}
         >
           <Input.Password 
             style={getInputStyle(theme)}
@@ -66,7 +84,11 @@ export const ChangePwd = () => {
           name="newPassword"
           rules={[
             { required: true, message: t("newPasswordRequired") },
-            { min: 6, message: t("passwordMinLength") }
+            { min: 8, message: t("passwordMinLength") },
+            {
+              pattern: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/,
+              message: t("passwordRequirements")
+            }
           ]}
         >
           <Input.Password 
@@ -114,4 +136,4 @@ export const ChangePwd = () => {
       </Form>
     </Flex>
   );
-};
+});

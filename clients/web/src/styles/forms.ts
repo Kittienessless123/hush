@@ -1,7 +1,6 @@
 import type { CSSProperties } from 'react';
 import type { Theme } from './theme';
 
-// Стили для инпутов
 export const getInputStyle = (theme: Theme): CSSProperties => ({
   backgroundColor: 'transparent',
   border: `1px solid ${theme.border}`,
@@ -12,14 +11,12 @@ export const getInputStyle = (theme: Theme): CSSProperties => ({
   transition: 'all 0.3s ease',
 });
 
-// Стили для лейблов
 export const getLabelStyle = (theme: Theme): CSSProperties => ({
   color: theme.textSecondary,
   fontSize: '16px',
   fontWeight: 400,
 });
 
-// Стили для кнопок
 export const getButtonStyle = (theme: Theme): CSSProperties => ({
   width: '100%',
   height: '48px',
@@ -33,13 +30,11 @@ export const getButtonStyle = (theme: Theme): CSSProperties => ({
   transition: 'all 0.3s ease',
 });
 
-// Стили для Select
 export const getSelectStyle = (theme?: { background: string; surface: string; surfaceHover: string; text: string; textSecondary: string; border: string; borderHover: string; glow: string; glowHover: string; glowFocus: string; success: string; error: string; warning: string; divider: string; overlay: string; }): CSSProperties => ({
   backgroundColor: 'transparent',
   borderRadius: '8px',
 });
 
-// Hover/Focus эффекты
 export const inputFocusStyles = (theme: Theme) => ({
   boxShadow: `0 0 20px ${theme.glowFocus}`,
   borderColor: theme.borderHover,
@@ -50,7 +45,6 @@ export const buttonHoverStyles = (theme: Theme) => ({
   background: theme.surfaceHover,
 });
 
-// Глобальные стили для Select dropdown
 export const getSelectDropdownStyles = (theme: Theme) => `
   .custom-select-dropdown .ant-select-item {
     background-color: ${theme.surface};

@@ -1,6 +1,10 @@
-// components/settings/Settings.tsx
 import { useTranslation } from "react-i18next";
 import { Divider, Flex, Typography } from "antd";
+import { observer } from "mobx-react-lite";
+import { useNavigate, useLocation, Outlet } from "react-router-dom";
+import { ArrowLeftOutlined } from "@ant-design/icons";
+import { Button } from "antd";
+import { useTheme } from "../../hooks/useTheme";
 import { LanguageSwitcher } from "./LanguageSwitcher";
 import { Notification } from "./Notification";
 import { ThemeSwitcher } from "./ThemeSwitcher";
@@ -8,14 +12,10 @@ import { LastSeen } from "./LastSeen";
 import { ReadReceipts } from "./ReadReceipts";
 import { Logout } from "./Logout";
 import { DeleteAcc } from "./DeleteAcc";
-import { Outlet, useNavigate, useLocation } from "react-router-dom";
-import { ArrowLeftOutlined } from "@ant-design/icons";
-import { Button } from "antd";
-import { useTheme } from "../../hooks/useTheme";
 
 const { Title } = Typography;
 
-export const Settings = () => {
+export const Settings = observer(() => {
   const { t } = useTranslation("settings");
   const navigate = useNavigate();
   const location = useLocation();
@@ -41,7 +41,6 @@ export const Settings = () => {
     }
   };
 
-  // Для дочерних страниц (blacklist, changepwd)
   if (!isRootSettings) {
     return (
       <Flex vertical style={{ padding: "24px 20px" }}>
@@ -60,7 +59,6 @@ export const Settings = () => {
     );
   }
 
-  // Для главной страницы настроек
   return (
     <Flex vertical style={{ padding: "24px 20px" }}>
       <Flex align="center" gap="middle" style={{ marginBottom: "16px" }}>
@@ -73,26 +71,25 @@ export const Settings = () => {
           {t("title")}
         </Title>
       </Flex>
-      
+
       <Divider style={{ borderColor: theme.divider, margin: "0 0 20px 0" }} />
-      
+
       <Flex vertical gap="middle">
         <LanguageSwitcher />
         <ThemeSwitcher />
-        
+
         <Notification />
         <Divider style={{ borderColor: theme.divider, margin: "8px 0" }} />
-        
+
         <LastSeen />
         <ReadReceipts />
-        
+
         <Divider style={{ borderColor: theme.divider, margin: "8px 0" }} />
-        
-        {/* Ссылки на отдельные страницы */}
-        <Flex 
-          align="center" 
+
+        <Flex
+          align="center"
           justify="space-between"
-          style={{ 
+          style={{
             padding: "12px 16px",
             backgroundColor: theme.surface,
             borderRadius: "8px",
@@ -110,11 +107,11 @@ export const Settings = () => {
           <span style={{ color: theme.text }}>{t("blockedUsers")}</span>
           <span style={{ color: theme.textSecondary }}>→</span>
         </Flex>
-        
-        <Flex 
-          align="center" 
+
+        <Flex
+          align="center"
           justify="space-between"
-          style={{ 
+          style={{
             padding: "12px 16px",
             backgroundColor: theme.surface,
             borderRadius: "8px",
@@ -132,12 +129,12 @@ export const Settings = () => {
           <span style={{ color: theme.text }}>{t("changePassword")}</span>
           <span style={{ color: theme.textSecondary }}>→</span>
         </Flex>
-        
+
         <Divider style={{ borderColor: theme.divider, margin: "8px 0" }} />
-        
+
         <Logout />
         <DeleteAcc />
       </Flex>
     </Flex>
   );
-};
+});

@@ -1,59 +1,38 @@
-/* import { makeAutoObservable, runInAction } from 'mobx';
-import type { 
-  User, 
-  Friend, 
-  BlacklistItem, 
-  UserSettings,
-  Theme,
-  Language,
-  UpdateProfileData,
-  ChangePasswordData,
-  PrivacySettings,
-  Session
-} from '../types/user.types';
-import { UserService } from '../services/api/users.api';
-import { SettingsService } from '../services/api/settings.api';
-import { AuthService } from '../services/api/auth.api';
-import { messageSocket } from '../services/websocket/messages.socket';
+/* eslint-disable @typescript-eslint/no-unused-vars */
+import { makeAutoObservable, runInAction } from "mobx";
+import type { User, Friend, UserSettings } from "../types/api.types";
+import { UserService } from "../services/api/users.api";
+import { SettingsService } from "../services/api/settings.api";
+import type { BlacklistItem } from "../types/user.types";
 
 export class UserStore {
-  // ========== STATE ==========
-  
-  // Профиль
   profile: User | null = null;
   isLoading = false;
   error: string | null = null;
-  
-  // Друзья
+
   friends: Friend[] = [];
   friendRequests: Friend[] = [];
   isLoadingFriends = false;
-  
-  // Черный список
+
   blacklist: BlacklistItem[] = [];
   isLoadingBlacklist = false;
-  
-  // Настройки
+
   settings: UserSettings = {
-    theme: 'system',
-    language: 'en',
+    theme: "system",
+    language: "en",
     notifications: {
       sound: true,
       popup: true,
       preview: true,
     },
     privacy: {
-      lastSeen: 'everyone',
+      lastSeen: "everyone",
       readReceipts: true,
       onlineStatus: true,
     },
-    security: {
-      twoFactorAuth: false,
-      activeSessions: [],
-    },
+    twoFactorAuth: false,
   };
-  
-  // Поиск
+
   searchResults: User[] = [];
   isSearching = false;
 
@@ -61,16 +40,14 @@ export class UserStore {
     makeAutoObservable(this);
   }
 
-  // ========== COMPUTED ==========
-  
   get friendList(): User[] {
     return this.friends
-      .filter(f => f.status === 'accepted')
-      .map(f => f.friend);
+      .filter((f) => f.status === "accepted")
+      .map((f) => f.friend);
   }
 
   get pendingRequests(): Friend[] {
-    return this.friendRequests.filter(f => f.status === 'pending');
+    return this.friendRequests.filter((f) => f.status === "pending");
   }
 
   get blockedUsers(): BlacklistItem[] {
@@ -78,14 +55,14 @@ export class UserStore {
   }
 
   get isDarkTheme(): boolean {
-    if (this.settings.theme === 'system') {
-      return window.matchMedia('(prefers-color-scheme: dark)').matches;
+    if (this.settings.theme === "system") {
+      return window.matchMedia("(prefers-color-scheme: dark)").matches;
     }
-    return this.settings.theme === 'dark';
+    return this.settings.theme === "dark";
   }
 
   // ========== ACTIONS ==========
-  
+
   setProfile(profile: User | null) {
     this.profile = profile;
   }
@@ -104,8 +81,7 @@ export class UserStore {
 
   setSettings(settings: Partial<UserSettings>) {
     this.settings = { ...this.settings, ...settings };
-    
-    // Применяем тему сразу
+
     if (settings.theme) {
       this.applyTheme(settings.theme);
     }
@@ -119,8 +95,6 @@ export class UserStore {
     this.error = error;
   }
 
-  // ========== ПРОФИЛЬ ==========
-  
   async loadProfile(userId: string) {
     this.setLoading(true);
     try {
@@ -131,67 +105,16 @@ export class UserStore {
       });
     } catch (error) {
       runInAction(() => {
-        this.setError('Failed to load profile');
+        this.setError("Failed to load profile");
         this.setLoading(false);
       });
     }
-  }
-
-  async updateProfile(data: UpdateProfileData) {
-    if (!this.profile) return;
-    
-    this.setLoading(true);
-    try {
-      const { data: updated } = await UserService.updateProfile(this.profile.id, data);
-      runInAction(() => {
-        this.profile = updated;
-        this.setLoading(false);
-      });
-    } catch (error) {
-      runInAction(() => {
-        this.setError('Failed to update profile');
-        this.setLoading(false);
-      });
-    }
-  }
-
-  async changePassword(data: ChangePasswordData) {
-    if (data.newPassword !== data.confirmPassword) {
-      this.setError('Passwords do not match');
-      return;
-    }
-    
-    this.setLoading(true);
-    try {
-      await AuthService.changePassword({
-        currentPassword: data.currentPassword,
-        newPassword: data.newPassword,
-      });
-      runInAction(() => {
-        this.setLoading(false);
-      });
-    } catch (error) {
-      runInAction(() => {
-        this.setError('Failed to change password');
-        this.setLoading(false);
-      });
-    }
-  }
-
-  async changeUsername(username: string) {
-    await this.updateProfile({ username });
-  }
-
-  async changeEmail(email: string) {
-    await this.updateProfile({ email });
   }
 
   async deleteAccount() {
-    if (!this.profile) return;
-    
     this.setLoading(true);
     try {
-      await UserService.deleteUser(this.profile.id);
+      await UserService.deleteUser();
       runInAction(() => {
         this.profile = null;
         this.friends = [];
@@ -200,42 +123,49 @@ export class UserStore {
       });
     } catch (error) {
       runInAction(() => {
-        this.setError('Failed to delete account');
+        this.setError("Failed to delete account");
+        this.setLoading(false);
+      });
+      throw error;
+    }
+  }
+  async updateProfile(data: Partial<User>) {
+    if (!this.profile) return;
+
+    this.setLoading(true);
+    try {
+      const { data: updated } = await UserService.updateProfile(
+        this.profile.id,
+        data,
+      );
+      runInAction(() => {
+        this.profile = updated;
+        this.setLoading(false);
+      });
+    } catch (error) {
+      runInAction(() => {
+        this.setError("Failed to update profile");
         this.setLoading(false);
       });
     }
   }
 
-  // ========== ДРУЗЬЯ ==========
-  
   async loadFriends() {
     this.isLoadingFriends = true;
     try {
       const { data } = await UserService.getFriends();
       runInAction(() => {
-        this.friends = data.filter((f: Friend) => f.status === 'accepted');
-        this.friendRequests = data.filter((f: Friend) => f.status === 'pending');
+        this.friends = data.filter((f: Friend) => f.status === "accepted");
+        this.friendRequests = data.filter(
+          (f: Friend) => f.status === "pending",
+        );
         this.isLoadingFriends = false;
       });
     } catch (error) {
       runInAction(() => {
-        this.setError('Failed to load friends');
+        this.setError("Failed to load friends");
         this.isLoadingFriends = false;
       });
-    }
-  }
-
-  async addFriend(userId: string) {
-    try {
-      const { data } = await UserService.sendFriendRequest(userId);
-      runInAction(() => {
-        this.friendRequests.push(data);
-      });
-      
-      // Уведомление через сокет
-      messageSocket.sendFriendRequest({ userId });
-    } catch (error) {
-      this.setError('Failed to send friend request');
     }
   }
 
@@ -243,11 +173,13 @@ export class UserStore {
     try {
       const { data } = await UserService.acceptFriendRequest(requestId);
       runInAction(() => {
-        this.friendRequests = this.friendRequests.filter(r => r.id !== requestId);
+        this.friendRequests = this.friendRequests.filter(
+          (r) => r.id !== requestId,
+        );
         this.friends.push(data);
       });
     } catch (error) {
-      this.setError('Failed to accept friend request');
+      this.setError("Failed to accept friend request");
     }
   }
 
@@ -255,10 +187,12 @@ export class UserStore {
     try {
       await UserService.rejectFriendRequest(requestId);
       runInAction(() => {
-        this.friendRequests = this.friendRequests.filter(r => r.id !== requestId);
+        this.friendRequests = this.friendRequests.filter(
+          (r) => r.id !== requestId,
+        );
       });
     } catch (error) {
-      this.setError('Failed to reject friend request');
+      this.setError("Failed to reject friend request");
     }
   }
 
@@ -266,28 +200,10 @@ export class UserStore {
     try {
       await UserService.removeFriend(friendId);
       runInAction(() => {
-        this.friends = this.friends.filter(f => f.id !== friendId);
+        this.friends = this.friends.filter((f) => f.id !== friendId);
       });
     } catch (error) {
-      this.setError('Failed to remove friend');
-    }
-  }
-
-  // ========== ЧЕРНЫЙ СПИСОК ==========
-  
-  async loadBlacklist() {
-    this.isLoadingBlacklist = true;
-    try {
-      const { data } = await UserService.getBlacklist();
-      runInAction(() => {
-        this.blacklist = data;
-        this.isLoadingBlacklist = false;
-      });
-    } catch (error) {
-      runInAction(() => {
-        this.setError('Failed to load blacklist');
-        this.isLoadingBlacklist = false;
-      });
+      this.setError("Failed to remove friend");
     }
   }
 
@@ -296,27 +212,13 @@ export class UserStore {
       const { data } = await UserService.blockUser(userId, reason);
       runInAction(() => {
         this.blacklist.push(data);
-        // Удаляем из друзей, если был
-        this.friends = this.friends.filter(f => f.friendId !== userId);
+        this.friends = this.friends.filter((f) => f.friendId !== userId);
       });
     } catch (error) {
-      this.setError('Failed to block user');
+      this.setError("Failed to block user");
     }
   }
 
-  async unblockUser(blockId: string) {
-    try {
-      await UserService.unblockUser(blockId);
-      runInAction(() => {
-        this.blacklist = this.blacklist.filter(b => b.id !== blockId);
-      });
-    } catch (error) {
-      this.setError('Failed to unblock user');
-    }
-  }
-
-  // ========== НАСТРОЙКИ ==========
-  
   async loadSettings() {
     try {
       const { data } = await SettingsService.getSettings();
@@ -325,7 +227,7 @@ export class UserStore {
         this.applyTheme(data.theme);
       });
     } catch (error) {
-      this.setError('Failed to load settings');
+      this.setError("Failed to load settings");
     }
   }
 
@@ -337,86 +239,24 @@ export class UserStore {
         this.applyTheme(data.theme);
       });
     } catch (error) {
-      this.setError('Failed to update settings');
+      this.setError("Failed to update settings");
     }
   }
 
-  async changeTheme(theme: Theme) {
+  async changeTheme(theme: "light" | "dark" | "system") {
     await this.updateSettings({ theme });
   }
 
-  async changeLanguage(language: Language) {
+  async changeLanguage(language: string) {
     await this.updateSettings({ language });
   }
 
-  async updatePrivacy(privacy: PrivacySettings) {
-    await this.updateSettings({
-      privacy: { ...this.settings.privacy, ...privacy },
-    });
-  }
-
-  async toggleNotifications(key: keyof typeof this.settings.notifications) {
-    await this.updateSettings({
-      notifications: {
-        ...this.settings.notifications,
-        [key]: !this.settings.notifications[key],
-      },
-    });
-  }
-
-  async toggleTwoFactorAuth(enable: boolean) {
-    try {
-      await SettingsService.toggleTwoFactorAuth(enable);
-      runInAction(() => {
-        this.settings.security.twoFactorAuth = enable;
-      });
-    } catch (error) {
-      this.setError('Failed to toggle two-factor authentication');
-    }
-  }
-
-  // ========== СЕССИИ ==========
-  
-  async loadSessions() {
-    try {
-      const { data } = await AuthService.getSessions();
-      runInAction(() => {
-        this.settings.security.activeSessions = data;
-      });
-    } catch (error) {
-      this.setError('Failed to load sessions');
-    }
-  }
-
-  async terminateSession(sessionId: string) {
-    try {
-      await AuthService.terminateSession(sessionId);
-      runInAction(() => {
-        this.settings.security.activeSessions = 
-          this.settings.security.activeSessions.filter(s => s.id !== sessionId);
-      });
-    } catch (error) {
-      this.setError('Failed to terminate session');
-    }
-  }
-
-  async terminateAllOtherSessions() {
-    try {
-      await AuthService.terminateAllOtherSessions();
-      await this.loadSessions(); // перезагружаем список
-    } catch (error) {
-      this.setError('Failed to terminate sessions');
-    }
-  }
-
-  // ========== ПОИСК ==========
-  
   async searchUsers(query: string) {
     if (!query.trim()) {
       this.searchResults = [];
       return;
     }
-    
+
     this.isSearching = true;
     try {
       const { data } = await UserService.searchUsers(query);
@@ -426,7 +266,7 @@ export class UserStore {
       });
     } catch (error) {
       runInAction(() => {
-        this.setError('Failed to search users');
+        this.setError("Failed to search users");
         this.isSearching = false;
       });
     }
@@ -436,31 +276,19 @@ export class UserStore {
     this.searchResults = [];
   }
 
-  // ========== ВСПОМОГАТЕЛЬНЫЕ ==========
-  
-  private applyTheme(theme: Theme) {
+  private applyTheme(theme: "light" | "dark" | "system") {
     const root = document.documentElement;
-    
-    if (theme === 'system') {
-      const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      root.classList.toggle('dark', systemDark);
+
+    if (theme === "system") {
+      const systemDark = window.matchMedia(
+        "(prefers-color-scheme: dark)",
+      ).matches;
+      root.classList.toggle("dark", systemDark);
     } else {
-      root.classList.toggle('dark', theme === 'dark');
+      root.classList.toggle("dark", theme === "dark");
     }
   }
 
-  // ========== LAST SEEN ==========
-  
-  async updateLastSeen(chatId: string) {
-    try {
-      await UserService.updateLastSeen(chatId);
-    } catch (error) {
-      console.error('Failed to update last seen:', error);
-    }
-  }
-
-  // ========== ОЧИСТКА ==========
-  
   reset() {
     this.profile = null;
     this.friends = [];
@@ -469,4 +297,44 @@ export class UserStore {
     this.searchResults = [];
     this.error = null;
   }
-} */
+
+  async loadBlacklist() {
+    this.isLoadingBlacklist = true;
+    try {
+      const { data } = await UserService.getBlacklist();
+      runInAction(() => {
+        this.blacklist = data;
+        this.isLoadingBlacklist = false;
+      });
+    } catch (error) {
+      runInAction(() => {
+        this.setError("Failed to load blacklist");
+        this.isLoadingBlacklist = false;
+      });
+    }
+  }
+
+  async unblockUser(blockId: string) {
+    try {
+      await UserService.unblockUser(blockId);
+      runInAction(() => {
+        this.blacklist = this.blacklist.filter((b) => b.id !== blockId);
+      });
+    } catch (error) {
+      this.setError("Failed to unblock user");
+      throw error;
+    }
+  }
+
+  async sendFriendRequest(userId: string) {
+    try {
+      const { data } = await UserService.sendFriendRequest(userId);
+      runInAction(() => {
+        this.friendRequests.push(data);
+      });
+    } catch (error) {
+      this.setError("Failed to send friend request");
+      throw error;
+    }
+  }
+}

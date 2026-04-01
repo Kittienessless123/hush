@@ -5,15 +5,9 @@ import { useNavigate } from "react-router-dom";
 import { useTheme } from "../../hooks/useTheme";
 import { useTranslation } from "react-i18next";
 import dayjs from "dayjs";
+import type { Friend } from "../../types/api.types";
 
 const { Title, Text } = Typography;
-
-interface Friend {
-  id: string;
-  name: string;
-  addedAt: string;
-  avatar?: string;
-}
 
 interface FriendsListProps {
   friends: Friend[];
@@ -25,11 +19,11 @@ export const FriendsList = ({ friends, onFriendClick }: FriendsListProps) => {
   const { theme } = useTheme();
   const { t } = useTranslation("profile");
 
-  const handleClick = (id: string) => {
+  const handleClick = (friendId: string) => {
     if (onFriendClick) {
-      onFriendClick(id);
+      onFriendClick(friendId);
     } else {
-      navigate(`/chat/${id}`);
+      navigate(`/chat/${friendId}`);
     }
   };
 
@@ -52,13 +46,13 @@ export const FriendsList = ({ friends, onFriendClick }: FriendsListProps) => {
           onMouseLeave={(e) => {
             e.currentTarget.style.backgroundColor = "transparent";
           }}
-          onClick={() => handleClick(friend.id)}
+          onClick={() => handleClick(friend.friend.id)}
         >
           <Flex align="center" gap="middle">
             <Avatar
               size={48}
               icon={<UserOutlined />}
-              src={friend.avatar}
+              src={friend.friend.avatar}
               style={{
                 backgroundColor: theme.surface,
                 color: theme.textSecondary,
@@ -67,15 +61,15 @@ export const FriendsList = ({ friends, onFriendClick }: FriendsListProps) => {
             />
             <Flex vertical>
               <Title level={5} style={{ margin: 0, color: theme.text }}>
-                {friend.name}
+                {friend.friend.username}
               </Title>
               <Text style={{ color: theme.textSecondary, fontSize: "12px" }}>
-                {t("added")} {dayjs(friend.addedAt).format("DD.MM.YYYY")}
+                {t("added")} {dayjs(friend.createdAt).format("DD.MM.YYYY")}
               </Text>
             </Flex>
           </Flex>
           <Text style={{ color: theme.textSecondary, fontSize: "12px" }}>
-            {t("online")}
+            {friend.friend.onlineStatus ? t("online") : t("offline")}
           </Text>
         </Flex>
       ))}

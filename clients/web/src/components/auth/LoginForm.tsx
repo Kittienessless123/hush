@@ -1,4 +1,3 @@
-// components/auth/LoginForm.tsx
 import { Button, Checkbox, Form, Input, message } from "antd";
 import { observer } from "mobx-react-lite";
 import { useTranslation } from "react-i18next";
@@ -7,13 +6,20 @@ import { useState } from "react";
 import { Typography } from "antd";
 import { getFormContainer, getFormCard } from "../../styles/containers";
 import { getFormTitleStyle } from "../../styles/typography";
-import { getInputStyle, getLabelStyle, getButtonStyle, inputFocusStyles, buttonHoverStyles } from "../../styles/forms";
+import {
+  getInputStyle,
+  getLabelStyle,
+  getButtonStyle,
+  inputFocusStyles,
+  buttonHoverStyles,
+} from "../../styles/forms";
 import { useTheme } from "../../hooks/useTheme";
+import { useAuthStore } from "../../hooks/useStore";
 
 const { Title } = Typography;
 
 type FieldType = {
-  username?: string;
+  identifier?: string;
   password?: string;
   remember?: string;
 };
@@ -22,19 +28,24 @@ export const LoginForm = observer(() => {
   const { t } = useTranslation("system");
   const navigate = useNavigate();
   const { theme } = useTheme();
+  const { login } = useAuthStore();
   const [loading, setLoading] = useState(false);
   const [form] = Form.useForm();
 
   const onFinish = async (values: FieldType) => {
+    if (!values.identifier || !values.password) return;
+
     setLoading(true);
     try {
-      console.log("Success:", values);
+      await login(values.identifier, values.password);
       message.success(t("loginSuccess"));
-      setTimeout(() => navigate("/dashboard"), 1000);
-    } catch (error) {
+      navigate("/chats");
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (error: any) {
       console.error("Login error:", error);
-      message.error(t("loginError"));
-      form.setFieldsValue({ password: '' });
+      const errorMessage = error.response?.data?.message || t("loginError");
+      message.error(errorMessage);
+      form.setFieldsValue({ password: "" });
     } finally {
       setLoading(false);
     }
@@ -47,7 +58,7 @@ export const LoginForm = observer(() => {
   };
 
   const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
-    e.currentTarget.style.boxShadow = 'none';
+    e.currentTarget.style.boxShadow = "none";
     e.currentTarget.style.borderColor = theme.border;
   };
 
@@ -68,7 +79,7 @@ export const LoginForm = observer(() => {
         <Title level={2} style={getFormTitleStyle(theme)}>
           {t("loginTitle")}
         </Title>
-        
+
         <Form
           form={form}
           name="login-form"
@@ -79,16 +90,18 @@ export const LoginForm = observer(() => {
           size="large"
         >
           <Form.Item
-            label={<span style={getLabelStyle(theme)}>{t("username")}</span>}
-            name="username"
+            label={
+              <span style={getLabelStyle(theme)}>{t("emailOrLogin")}</span>
+            }
+            name="identifier"
             rules={[
-              { required: true, message: t("usernameRequired") },
-              { min: 3, message: t("usernameMinLength") }
+              { required: true, message: t("emailOrLoginRequired") },
+              { min: 3, message: t("identifierMinLength") },
             ]}
           >
-            <Input 
+            <Input
               style={getInputStyle(theme)}
-              placeholder={t("username")}
+              placeholder={t("emailOrLogin")}
               onFocus={handleFocus}
               onBlur={handleBlur}
             />
@@ -99,10 +112,10 @@ export const LoginForm = observer(() => {
             name="password"
             rules={[
               { required: true, message: t("passwordRequired") },
-              { min: 6, message: t("passwordMinLength") }
+              { min: 8, message: t("passwordMinLength") },
             ]}
           >
-            <Input.Password 
+            <Input.Password
               style={getInputStyle(theme)}
               placeholder={t("password")}
               onFocus={handleFocus}
@@ -125,7 +138,7 @@ export const LoginForm = observer(() => {
               onMouseEnter={handleMouseEnter}
               onMouseLeave={handleMouseLeave}
             >
-              {t("submit")}
+              {t("login")}
             </Button>
           </Form.Item>
         </Form>

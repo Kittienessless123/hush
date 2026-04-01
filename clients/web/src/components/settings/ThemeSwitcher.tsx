@@ -1,24 +1,22 @@
 // components/settings/ThemeSwitcher.tsx
 import { Flex, Select, Typography } from "antd";
+import { observer } from "mobx-react-lite";
 import { useTranslation } from "react-i18next";
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
+import { useSettingsStore } from "../../hooks/useStore";
 import { useTheme } from "../../hooks/useTheme";
 import { getLabelStyle } from "../../styles/forms";
 
 const { Text } = Typography;
 
-export const ThemeSwitcher = () => {
+export const ThemeSwitcher = observer(() => {
   const { t } = useTranslation("settings");
-  const { theme, toggleTheme, isDark } = useTheme();
+  const { theme: currentTheme } = useTheme();
+  const { settings, updateTheme, loadSettings } = useSettingsStore();
 
-  const getCurrentThemeMode = (): string => {
-    const savedTheme = localStorage.getItem('theme');
-    if (savedTheme === 'system') return 'system';
-    if (savedTheme === 'light') return 'light';
-    return 'dark';
-  };
-
-  const [themeMode, setThemeMode] = useState<string>(getCurrentThemeMode());
+  useEffect(() => {
+    loadSettings();
+  }, [loadSettings]);
 
   const options = [
     { value: "dark", label: t("darkTheme") || "Темная" },
@@ -26,54 +24,24 @@ export const ThemeSwitcher = () => {
     { value: "system", label: t("systemTheme") || "Системная" },
   ];
 
-  const handleThemeChange = (value: string) => {
-    setThemeMode(value);
-    localStorage.setItem('theme', value);
-    
-    if (value === 'system') {
-      const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      if (systemPrefersDark !== isDark) {
-        toggleTheme();
-      }
-    } else {
-      const shouldBeDark = value === 'dark';
-      if (shouldBeDark !== isDark) {
-        toggleTheme();
-      }
-    }
+  const handleThemeChange = (value: "light" | "dark" | "system") => {
+    updateTheme(value);
   };
-
-  // Слушаем изменения системной темы
-  useEffect(() => {
-    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-    const handleSystemThemeChange = (e: MediaQueryListEvent) => {
-      const savedTheme = localStorage.getItem('theme');
-      if (savedTheme === 'system') {
-        const shouldBeDark = e.matches;
-        if (shouldBeDark !== isDark) {
-          toggleTheme();
-        }
-      }
-    };
-
-    mediaQuery.addEventListener('change', handleSystemThemeChange);
-    return () => mediaQuery.removeEventListener('change', handleSystemThemeChange);
-  }, [isDark, toggleTheme]);
 
   return (
     <Flex align="center" justify="space-between" style={{ padding: "8px 0" }}>
-      <Text style={getLabelStyle(theme)}>{t("theme") || "Тема"}</Text>
+      <Text style={getLabelStyle(currentTheme)}>{t("theme") || "Тема"}</Text>
       <Select
-        value={themeMode}
+        value={settings.theme}
         onChange={handleThemeChange}
         options={options}
         style={{ width: 120 }}
         popupClassName="custom-select-dropdown"
-        dropdownStyle={{ 
-          backgroundColor: theme.surface,
-          border: `1px solid ${theme.border}`,
+        dropdownStyle={{
+          backgroundColor: currentTheme.surface,
+          border: `1px solid ${currentTheme.border}`,
         }}
       />
     </Flex>
   );
-};
+});

@@ -1,4 +1,3 @@
-// pages/MePage.tsx
 import {
   UserOutlined,
   SettingOutlined,
@@ -16,7 +15,6 @@ import {
   Divider,
   Input,
   Modal,
-  DatePicker,
   message,
   Select,
   Empty,
@@ -24,7 +22,7 @@ import {
 import { FriendsList } from "../../components/users/FriendsList";
 import { observer } from "mobx-react-lite";
 import { useNavigate } from "react-router-dom";
-import { useState, useRef, useMemo } from "react";
+import { useState, useRef, useMemo, useEffect } from "react";
 import { useTheme } from "../../hooks/useTheme";
 import { useTranslation } from "react-i18next";
 import { getThreeColumnLayout, getCenterColumn } from "../../styles/containers";
@@ -32,111 +30,126 @@ import {
   getPageTitleStyle,
   getSecondaryTextStyle,
 } from "../../styles/typography";
-import {
-  getProfileHeaderStyle,
-} from "../../styles/profile";
+import { getProfileHeaderStyle } from "../../styles/profile";
 import dayjs from "dayjs";
+import { useAuthStore, useUserStore } from "../../hooks/useStore";
+import { Fallback } from "../../components/common/Fallback";
 
 const { Title, Text } = Typography;
 const { TextArea } = Input;
-
-interface Friend {
-  id: string;
-  name: string;
-  addedAt: string;
-  avatar?: string;
-}
-
-const mockFriends: Friend[] = [
-  { id: "1", name: "Анна Петрова", addedAt: "2024-01-15", avatar: undefined },
-  { id: "2", name: "Иван Сидоров", addedAt: "2024-02-20", avatar: undefined },
-  { id: "3", name: "Мария Иванова", addedAt: "2024-01-10", avatar: undefined },
-  { id: "4", name: "Дмитрий Смирнов", addedAt: "2024-03-01", avatar: undefined },
-  { id: "5", name: "Елена Козлова", addedAt: "2024-02-05", avatar: undefined },
-];
 
 export const MePage = observer(() => {
   const { t } = useTranslation("profile");
   const navigate = useNavigate();
   const { theme } = useTheme();
+
+  const { user } = useAuthStore();
+  const {
+    profile,
+    isLoading,
+    loadProfile,
+    updateProfile,
+    friends,
+    loadFriends,
+    isLoadingFriends,
+  } = useUserStore();
+
   const [isEditing, setIsEditing] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
-  const [sortValue, setSortValue] = useState<"name_asc" | "name_desc" | "date_asc" | "date_desc">("date_desc");
+  const [sortValue, setSortValue] = useState<
+    "name_asc" | "name_desc" | "date_asc" | "date_desc"
+  >("date_desc");
+  const [editForm, setEditForm] = useState({
+    name: "",
+    description: "",
+  });
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const [profile, setProfile] = useState({
-    name: "Анна Петрова",
-    description: "Online",
-    status: "Живу в моменте ✨",
-    birthday: "1995-05-15",
-    friends: 128,
-    avatar: null as string | null,
-  });
+  useEffect(() => {
+    if (user?.id) {
+      loadProfile(user.id);
+      loadFriends();
+    }
+  }, [loadFriends, loadProfile, user?.id]);
 
-  const [editForm, setEditForm] = useState({
-    name: profile.name,
-    status: profile.status,
-    birthday: profile.birthday ? dayjs(profile.birthday) : null,
-  });
+  useEffect(() => {
+    if (profile) {
+      setEditForm({
+        name: profile.username || profile.username || "",
+        description: profile.description || "",
+      });
+    }
+  }, [profile]);
+
+  if (isLoading || !profile) {
+    return <Fallback />;
+  }
 
   const handleAvatarClick = () => {
     fileInputRef.current?.click();
   };
 
-  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      // Здесь будет загрузка аватара на сервер
+      // Пока только локальное отображение
       const reader = new FileReader();
       reader.onloadend = () => {
-        setProfile((prev) => ({ ...prev, avatar: reader.result as string }));
+        // TODO: Отправить файл на сервер
+        // await uploadAvatar(file);
         message.success(t("avatarChanged"));
       };
       reader.readAsDataURL(file);
     }
   };
 
-  const handleSaveProfile = () => {
-    setProfile((prev) => ({
-      ...prev,
-      name: editForm.name,
-      status: editForm.status,
-      birthday: editForm.birthday
-        ? editForm.birthday.format("YYYY-MM-DD")
-        : prev.birthday,
-    }));
-    setIsEditing(false);
-    message.success(t("profileUpdated"));
+  const handleSaveProfile = async () => {
+    try {
+      await updateProfile({
+        username: editForm.name,
+        description: editForm.description,
+      });
+      setIsEditing(false);
+      message.success(t("profileUpdated"));
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    } catch (error) {
+      message.error(t("profileUpdateError"));
+    }
   };
 
-  // Фильтрация и сортировка друзей
   const filteredAndSortedFriends = useMemo(() => {
-    let filtered = [...mockFriends];
-    
-    // Фильтрация по поиску
+    const acceptedFriends = friends.filter((f) => f.status === "accepted");
+
+    let filtered = [...acceptedFriends];
+
     if (searchTerm) {
-      filtered = filtered.filter(friend =>
-        friend.name.toLowerCase().includes(searchTerm.toLowerCase())
+      filtered = filtered.filter((friend) =>
+        friend.friend.username.toLowerCase().includes(searchTerm.toLowerCase()),
       );
     }
-    
-    // Сортировка
+
     filtered.sort((a, b) => {
       switch (sortValue) {
         case "name_asc":
-          return a.name.localeCompare(b.name);
+          return a.friend.username.localeCompare(b.friend.username);
         case "name_desc":
-          return b.name.localeCompare(a.name);
+          return b.friend.username.localeCompare(a.friend.username);
         case "date_asc":
-          return new Date(a.addedAt).getTime() - new Date(b.addedAt).getTime();
+          return (
+            new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+          );
         case "date_desc":
-          return new Date(b.addedAt).getTime() - new Date(a.addedAt).getTime();
+          return (
+            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+          );
         default:
           return 0;
       }
     });
-    
+
     return filtered;
-  }, [searchTerm, sortValue]);
+  }, [friends, searchTerm, sortValue]);
 
   const iconButtonStyle = {
     color: theme.textSecondary,
@@ -187,11 +200,11 @@ export const MePage = observer(() => {
           />
         </div>
         <div>
-          <Text style={{ color: theme.text }}>{t("status")}</Text>
+          <Text style={{ color: theme.text }}>{t("description")}</Text>
           <TextArea
-            value={editForm.status}
+            value={editForm.description}
             onChange={(e) =>
-              setEditForm((prev) => ({ ...prev, status: e.target.value }))
+              setEditForm((prev) => ({ ...prev, description: e.target.value }))
             }
             rows={3}
             style={{
@@ -199,21 +212,6 @@ export const MePage = observer(() => {
               backgroundColor: theme.surface,
               borderColor: theme.border,
               color: theme.text,
-            }}
-          />
-        </div>
-        <div>
-          <Text style={{ color: theme.text }}>{t("birthday")}</Text>
-          <DatePicker
-            value={editForm.birthday}
-            onChange={(date) =>
-              setEditForm((prev) => ({ ...prev, birthday: date }))
-            }
-            style={{
-              marginTop: "8px",
-              width: "100%",
-              backgroundColor: theme.surface,
-              borderColor: theme.border,
             }}
           />
         </div>
@@ -255,10 +253,8 @@ export const MePage = observer(() => {
           </Flex>
         </Flex>
 
-        {/* Профиль - улучшенный дизайн */}
         <Flex vertical style={{ padding: "32px 24px" }}>
           <Flex vertical align="center" gap="large">
-            {/* Аватар */}
             <div style={{ position: "relative" }}>
               <Avatar
                 size={120}
@@ -301,11 +297,10 @@ export const MePage = observer(() => {
               />
             </div>
 
-            {/* Информация */}
             <Flex vertical align="center" gap="small" style={{ width: "100%" }}>
               <Flex align="center" gap="small">
                 <Title level={2} style={{ margin: 0, color: theme.text }}>
-                  {profile.name}
+                  {profile.username || profile.username}
                 </Title>
                 <Button
                   type="text"
@@ -313,57 +308,66 @@ export const MePage = observer(() => {
                   onClick={() => setIsEditing(true)}
                 />
               </Flex>
-              <Text style={getSecondaryTextStyle(theme)}>
-                {profile.description}
-              </Text>
+              <Text style={getSecondaryTextStyle(theme)}>{profile.login}</Text>
+              <Text style={getSecondaryTextStyle(theme)}>{profile.email}</Text>
             </Flex>
           </Flex>
 
-          {/* Статус - без рамки, просто цветом */}
-          <Flex
-            style={{
-              marginTop: 24,
-              padding: "12px 16px",
-              backgroundColor: theme.surfaceHover,
-              borderRadius: "12px",
-            }}
-          >
-            <Text style={{ color: theme.text, fontSize: "14px", width: "100%", textAlign: "center" }}>
-              {profile.status}
-            </Text>
-          </Flex>
+          {profile.description && (
+            <Flex
+              style={{
+                marginTop: 24,
+                padding: "12px 16px",
+                backgroundColor: theme.surfaceHover,
+                borderRadius: "12px",
+              }}
+            >
+              <Text
+                style={{
+                  color: theme.text,
+                  fontSize: "14px",
+                  width: "100%",
+                  textAlign: "center",
+                }}
+              >
+                {profile.description}
+              </Text>
+            </Flex>
+          )}
 
-          {/* Дополнительная информация */}
           <Flex vertical gap="small" style={{ marginTop: 24 }}>
-            {profile.birthday && (
-              <Flex align="center" justify="space-between">
-                <Text style={{ color: theme.textSecondary }}>
-                  🎂 {t("birthday")}
-                </Text>
-                <Text style={{ color: theme.text }}>
-                  {dayjs(profile.birthday).format("DD MMMM YYYY")}
-                </Text>
-              </Flex>
-            )}
+            <Flex align="center" justify="space-between">
+              <Text style={{ color: theme.textSecondary }}>
+                📅 {t("joined")}
+              </Text>
+              <Text style={{ color: theme.text }}>
+                {dayjs(profile.createdAt).format("DD MMMM YYYY")}
+              </Text>
+            </Flex>
             <Flex align="center" justify="space-between">
               <Text style={{ color: theme.textSecondary }}>
                 👥 {t("friends")}
               </Text>
-              <Text style={{ color: theme.text }}>{profile.friends}</Text>
+              <Text style={{ color: theme.text }}>
+                {friends.filter((f) => f.status === "accepted").length}
+              </Text>
             </Flex>
           </Flex>
         </Flex>
 
         <Divider style={{ margin: "0", borderColor: theme.divider }} />
 
-        {/* Поиск и сортировка друзей */}
         <Flex vertical style={{ padding: "20px" }}>
-          <Flex justify="space-between" align="center" style={{ marginBottom: 16 }}>
+          <Flex
+            justify="space-between"
+            align="center"
+            style={{ marginBottom: 16 }}
+          >
             <Title level={4} style={getPageTitleStyle(theme)}>
               {t("friends")}
             </Title>
             <Text style={getSecondaryTextStyle(theme)}>
-              {filteredAndSortedFriends.length} {t("of")} {mockFriends.length}
+              {filteredAndSortedFriends.length} {t("friends")}
             </Text>
           </Flex>
 
@@ -394,8 +398,11 @@ export const MePage = observer(() => {
             />
           </Flex>
 
-          {/* Список друзей */}
-          {filteredAndSortedFriends.length === 0 ? (
+          {isLoadingFriends ? (
+            <Flex justify="center" style={{ padding: "40px" }}>
+              <span>Loading...</span>
+            </Flex>
+          ) : filteredAndSortedFriends.length === 0 ? (
             <Empty
               description={t("noFriendsFound")}
               style={{ color: theme.textSecondary, marginTop: 40 }}
