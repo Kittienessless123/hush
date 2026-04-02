@@ -1,9 +1,14 @@
-// src/chat/repositories/chat.repository.ts
+// src/common/repositories/chat.repository.ts (или src/chat/repositories/chat.repository.ts)
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
-import { Chat } from '@prisma/client';
+import { Chat, Prisma } from '@prisma/client';
 
-export interface ChatWithUsers extends Chat {
+export interface ChatWithUsers {
+  id: string;
+  user1Id: string;
+  user2Id: string;
+  createdAt: Date;
+  updatedAt: Date;
   user1: {
     id: string;
     username: string;
@@ -36,7 +41,7 @@ export class ChatRepository {
   constructor(private readonly prisma: PrismaService) {}
 
   async findById(id: string): Promise<ChatWithUsers | null> {
-    const result = await this.prisma.chat.findUnique({
+    const chat = await this.prisma.chat.findUnique({
       where: { id },
       include: {
         user1: {
@@ -62,7 +67,31 @@ export class ChatRepository {
       },
     });
 
-    return result as ChatWithUsers | null;
+    if (!chat) return null;
+
+    return {
+      id: chat.id,
+      user1Id: chat.user1Id,
+      user2Id: chat.user2Id,
+      createdAt: chat.createdAt,
+      updatedAt: chat.updatedAt,
+      user1: {
+        id: chat.user1.id,
+        username: chat.user1.username,
+        login: chat.user1.login,
+        avatar: chat.user1.avatar,
+        onlineStatus: chat.user1.onlineStatus,
+        lastSeen: chat.user1.lastSeen,
+      },
+      user2: {
+        id: chat.user2.id,
+        username: chat.user2.username,
+        login: chat.user2.login,
+        avatar: chat.user2.avatar,
+        onlineStatus: chat.user2.onlineStatus,
+        lastSeen: chat.user2.lastSeen,
+      },
+    };
   }
 
   async findChatBetweenUsers(
@@ -79,8 +108,70 @@ export class ChatRepository {
     });
   }
 
+  async findChatBetweenUsersWithDetails(
+    userId1: string,
+    userId2: string,
+  ): Promise<ChatWithUsers | null> {
+    const chat = await this.prisma.chat.findFirst({
+      where: {
+        OR: [
+          { user1Id: userId1, user2Id: userId2 },
+          { user1Id: userId2, user2Id: userId1 },
+        ],
+      },
+      include: {
+        user1: {
+          select: {
+            id: true,
+            username: true,
+            login: true,
+            avatar: true,
+            onlineStatus: true,
+            lastSeen: true,
+          },
+        },
+        user2: {
+          select: {
+            id: true,
+            username: true,
+            login: true,
+            avatar: true,
+            onlineStatus: true,
+            lastSeen: true,
+          },
+        },
+      },
+    });
+
+    if (!chat) return null;
+
+    return {
+      id: chat.id,
+      user1Id: chat.user1Id,
+      user2Id: chat.user2Id,
+      createdAt: chat.createdAt,
+      updatedAt: chat.updatedAt,
+      user1: {
+        id: chat.user1.id,
+        username: chat.user1.username,
+        login: chat.user1.login,
+        avatar: chat.user1.avatar,
+        onlineStatus: chat.user1.onlineStatus,
+        lastSeen: chat.user1.lastSeen,
+      },
+      user2: {
+        id: chat.user2.id,
+        username: chat.user2.username,
+        login: chat.user2.login,
+        avatar: chat.user2.avatar,
+        onlineStatus: chat.user2.onlineStatus,
+        lastSeen: chat.user2.lastSeen,
+      },
+    };
+  }
+
   async findUserChats(userId: string): Promise<ChatWithUsers[]> {
-    const results = await this.prisma.chat.findMany({
+    const chats = await this.prisma.chat.findMany({
       where: {
         OR: [{ user1Id: userId }, { user2Id: userId }],
       },
@@ -111,7 +202,29 @@ export class ChatRepository {
       },
     });
 
-    return results as ChatWithUsers[];
+    return chats.map((chat) => ({
+      id: chat.id,
+      user1Id: chat.user1Id,
+      user2Id: chat.user2Id,
+      createdAt: chat.createdAt,
+      updatedAt: chat.updatedAt,
+      user1: {
+        id: chat.user1.id,
+        username: chat.user1.username,
+        login: chat.user1.login,
+        avatar: chat.user1.avatar,
+        onlineStatus: chat.user1.onlineStatus,
+        lastSeen: chat.user1.lastSeen,
+      },
+      user2: {
+        id: chat.user2.id,
+        username: chat.user2.username,
+        login: chat.user2.login,
+        avatar: chat.user2.avatar,
+        onlineStatus: chat.user2.onlineStatus,
+        lastSeen: chat.user2.lastSeen,
+      },
+    }));
   }
 
   async findUserChatsWithLastMessage(
@@ -165,13 +278,40 @@ export class ChatRepository {
     });
 
     return chats.map((chat) => ({
-      ...chat,
-      lastMessage: chat.messages[0],
-    })) as ChatWithLastMessage[];
+      id: chat.id,
+      user1Id: chat.user1Id,
+      user2Id: chat.user2Id,
+      createdAt: chat.createdAt,
+      updatedAt: chat.updatedAt,
+      user1: {
+        id: chat.user1.id,
+        username: chat.user1.username,
+        login: chat.user1.login,
+        avatar: chat.user1.avatar,
+        onlineStatus: chat.user1.onlineStatus,
+        lastSeen: chat.user1.lastSeen,
+      },
+      user2: {
+        id: chat.user2.id,
+        username: chat.user2.username,
+        login: chat.user2.login,
+        avatar: chat.user2.avatar,
+        onlineStatus: chat.user2.onlineStatus,
+        lastSeen: chat.user2.lastSeen,
+      },
+      lastMessage: chat.messages[0]
+        ? {
+            id: chat.messages[0].id,
+            text: chat.messages[0].text,
+            createdAt: chat.messages[0].createdAt,
+            senderId: chat.messages[0].senderId,
+          }
+        : undefined,
+    }));
   }
 
   async create(user1Id: string, user2Id: string): Promise<ChatWithUsers> {
-    const result = await this.prisma.chat.create({
+    const chat = await this.prisma.chat.create({
       data: {
         user1Id,
         user2Id,
@@ -200,11 +340,36 @@ export class ChatRepository {
       },
     });
 
-    return result as ChatWithUsers;
+    return {
+      id: chat.id,
+      user1Id: chat.user1Id,
+      user2Id: chat.user2Id,
+      createdAt: chat.createdAt,
+      updatedAt: chat.updatedAt,
+      user1: {
+        id: chat.user1.id,
+        username: chat.user1.username,
+        login: chat.user1.login,
+        avatar: chat.user1.avatar,
+        onlineStatus: chat.user1.onlineStatus,
+        lastSeen: chat.user1.lastSeen,
+      },
+      user2: {
+        id: chat.user2.id,
+        username: chat.user2.username,
+        login: chat.user2.login,
+        avatar: chat.user2.avatar,
+        onlineStatus: chat.user2.onlineStatus,
+        lastSeen: chat.user2.lastSeen,
+      },
+    };
   }
 
   async delete(id: string): Promise<Chat> {
-    const chat = await this.findById(id);
+    const chat = await this.prisma.chat.findUnique({
+      where: { id },
+    });
+
     if (!chat) {
       throw new NotFoundException(`Chat with ID ${id} not found`);
     }

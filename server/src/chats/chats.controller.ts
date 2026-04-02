@@ -10,10 +10,18 @@ import {
   UseGuards,
   HttpCode,
   HttpStatus,
+  UseInterceptors,
+  UploadedFile,
+  ParseFilePipe,
+  MaxFileSizeValidator,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { ChatService } from './chats.service';
 import { JwtAuthGuard } from '../common/guards/jwt-auth/jwt-auth.guard';
-import * as currentUserDecorator from '../common/decorators/current-user/current-user.decorator';
+import {
+  CurrentUser,
+  CurrentUserPayload,
+} from '../common/decorators/current-user/current-user.decorator';
 import {
   CreateChatDto,
   SendMessageDto,
@@ -30,6 +38,7 @@ import {
   ApiOperation,
   ApiResponse,
   ApiBearerAuth,
+  ApiConsumes,
 } from '@nestjs/swagger';
 
 @ApiTags('Chats')
@@ -47,8 +56,7 @@ export class ChatController {
     type: ChatListResponseDto,
   })
   async getUserChats(
-    @currentUserDecorator.CurrentUser()
-    currentUser: currentUserDecorator.CurrentUserPayload,
+    @CurrentUser() currentUser: CurrentUserPayload,
     @Query('limit') limit?: string,
     @Query('offset') offset?: string,
   ): Promise<ChatListResponseDto> {
@@ -66,12 +74,9 @@ export class ChatController {
     description: 'Chat details',
     type: ChatResponseDto,
   })
-  @ApiResponse({ status: 403, description: 'Access denied' })
-  @ApiResponse({ status: 404, description: 'Chat not found' })
   async getChatById(
     @Param('id', ParseUUIDPipe) id: string,
-    @currentUserDecorator.CurrentUser()
-    currentUser: currentUserDecorator.CurrentUserPayload,
+    @CurrentUser() currentUser: CurrentUserPayload,
   ): Promise<ChatResponseDto> {
     return await this.chatService.getChatById(id, currentUser.id);
   }
@@ -83,16 +88,9 @@ export class ChatController {
     description: 'Chat created',
     type: ChatResponseDto,
   })
-  @ApiResponse({ status: 400, description: 'Cannot create chat with yourself' })
-  @ApiResponse({
-    status: 403,
-    description: 'Cannot create chat with blocked user',
-  })
-  @ApiResponse({ status: 404, description: 'Target user not found' })
   async createChat(
     @Body() createChatDto: CreateChatDto,
-    @currentUserDecorator.CurrentUser()
-    currentUser: currentUserDecorator.CurrentUserPayload,
+    @CurrentUser() currentUser: CurrentUserPayload,
   ): Promise<ChatResponseDto> {
     return await this.chatService.createChat(currentUser.id, createChatDto);
   }
@@ -105,12 +103,9 @@ export class ChatController {
     description: 'Chat deleted',
     type: DeleteChatResponseDto,
   })
-  @ApiResponse({ status: 403, description: 'Permission denied' })
-  @ApiResponse({ status: 404, description: 'Chat not found' })
   async deleteChat(
     @Param('id', ParseUUIDPipe) id: string,
-    @currentUserDecorator.CurrentUser()
-    currentUser: currentUserDecorator.CurrentUserPayload,
+    @CurrentUser() currentUser: CurrentUserPayload,
   ): Promise<DeleteChatResponseDto> {
     return await this.chatService.deleteChat(id, currentUser.id);
   }
@@ -122,40 +117,34 @@ export class ChatController {
     description: 'List of messages',
     type: [MessageResponseDto],
   })
-  @ApiResponse({ status: 403, description: 'Access denied' })
-  @ApiResponse({ status: 404, description: 'Chat not found' })
   async getChatMessages(
     @Param('id', ParseUUIDPipe) id: string,
-    @currentUserDecorator.CurrentUser()
-    currentUser: currentUserDecorator.CurrentUserPayload,
+    @CurrentUser() currentUser: CurrentUserPayload,
     @Query() query: GetMessagesQueryDto,
   ): Promise<MessageResponseDto[]> {
     return await this.chatService.getChatMessages(id, currentUser.id, query);
   }
 
   @Post(':id/messages')
-  @ApiOperation({ summary: 'Send a message in chat' })
+  @ApiConsumes('multipart/form-data')
+  @ApiOperation({ summary: 'Send a message in chat (text or file)' })
   @ApiResponse({
     status: 201,
     description: 'Message sent',
     type: MessageResponseDto,
   })
-  @ApiResponse({
-    status: 400,
-    description: 'Message must contain text or file',
-  })
-  @ApiResponse({ status: 403, description: 'Access denied or user blocked' })
-  @ApiResponse({ status: 404, description: 'Chat not found' })
+  @UseInterceptors(FileInterceptor('file'))
   async sendMessage(
     @Param('id', ParseUUIDPipe) id: string,
-    @currentUserDecorator.CurrentUser()
-    currentUser: currentUserDecorator.CurrentUserPayload,
+    @CurrentUser() currentUser: CurrentUserPayload,
     @Body() sendMessageDto: SendMessageDto,
+    @UploadedFile() file?: Express.Multer.File,
   ): Promise<MessageResponseDto> {
     return await this.chatService.sendMessage(
       id,
       currentUser.id,
       sendMessageDto,
+      file,
     );
   }
 
@@ -163,22 +152,18 @@ export class ChatController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Delete a message' })
   @ApiResponse({ status: 200, description: 'Message deleted' })
-  @ApiResponse({ status: 403, description: 'Can only delete own messages' })
-  @ApiResponse({ status: 404, description: 'Message not found' })
-  deleteMessage(
+  async deleteMessage(
     @Param('messageId', ParseUUIDPipe) messageId: string,
-    @currentUserDecorator.CurrentUser()
-    currentUser: currentUserDecorator.CurrentUserPayload,
+    @CurrentUser() currentUser: CurrentUserPayload,
   ): Promise<{ message: string; messageId: string }> {
-    return this.chatService.deleteMessage(messageId, currentUser.id);
+    return await this.chatService.deleteMessage(messageId, currentUser.id);
   }
 
   @Get('unread/count')
   @ApiOperation({ summary: 'Get unread messages count' })
   @ApiResponse({ status: 200, description: 'Unread counts' })
   async getUnreadCount(
-    @currentUserDecorator.CurrentUser()
-    currentUser: currentUserDecorator.CurrentUserPayload,
+    @CurrentUser() currentUser: CurrentUserPayload,
   ): Promise<{ total: number; chats: Record<string, number> }> {
     return await this.chatService.getUnreadCount(currentUser.id);
   }

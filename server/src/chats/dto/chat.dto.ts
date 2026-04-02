@@ -1,4 +1,4 @@
-// src/chat/dto/chat.dto.ts
+// src/chats/dto/chat.dto.ts
 import {
   IsUUID,
   IsString,
@@ -13,13 +13,12 @@ import {
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { forwardRef } from '@nestjs/common';
 
 // Request DTOs
 export class CreateChatDto {
   @ApiProperty({ description: 'ID of the user to start chat with' })
   @IsUUID()
-  targetUserId: string;
+  targetUserId: string; // 👈 Исправлено: targetUserId вместо user2Id
 }
 
 export class GetMessagesQueryDto {
@@ -57,25 +56,10 @@ export class GetMessagesQueryDto {
 }
 
 export class SendMessageDto {
-  @ApiProperty({ description: 'Message text' })
-  @IsString()
-  text: string;
-
-  @ApiProperty({
-    required: false,
-    description: 'File URL if message contains file',
-  })
+  @ApiPropertyOptional({ description: 'Message text' })
   @IsOptional()
   @IsString()
-  fileUrl?: string;
-
-  @ApiProperty({
-    required: false,
-    description: 'File type if message contains file',
-  })
-  @IsOptional()
-  @IsString()
-  fileType?: string;
+  text?: string; // 👈 Сделано опциональным для файлов
 
   @ApiProperty({
     required: false,
@@ -98,13 +82,13 @@ export class UserInChatDto {
   @ApiProperty()
   login: string;
 
-  @ApiProperty()
-  avatar?: string;
+  @ApiPropertyOptional()
+  avatar?: string | null; // 👈 Исправлено: string | null
 
   @ApiProperty()
   onlineStatus: boolean;
 
-  @ApiProperty()
+  @ApiPropertyOptional()
   lastSeen?: Date;
 }
 
@@ -118,14 +102,14 @@ export class MessageInChatDto {
   @ApiProperty()
   senderId: string;
 
-  @ApiProperty()
-  text?: string;
+  @ApiPropertyOptional()
+  text?: string | null; // 👈 Исправлено: может быть null
 
-  @ApiProperty()
-  fileUrl?: string;
+  @ApiPropertyOptional()
+  fileUrl?: string | null; // 👈 Исправлено: может быть null
 
-  @ApiProperty()
-  fileType?: string;
+  @ApiPropertyOptional()
+  fileType?: string | null; // 👈 Исправлено: может быть null
 
   @ApiProperty()
   encrypted: boolean;
@@ -136,7 +120,7 @@ export class MessageInChatDto {
   @ApiProperty()
   updatedAt: Date;
 
-  @ApiProperty()
+  @ApiPropertyOptional({ type: () => UserInChatDto })
   sender?: UserInChatDto;
 }
 
@@ -153,13 +137,9 @@ export class ChatResponseDto {
   user2Id: string;
 
   @ApiProperty({ type: () => UserInChatDto })
-  @ValidateNested()
-  @Type(() => UserInChatDto)
   user1: UserInChatDto;
 
   @ApiProperty({ type: () => UserInChatDto })
-  @ValidateNested()
-  @Type(() => UserInChatDto)
   user2: UserInChatDto;
 
   @ApiProperty()
@@ -168,22 +148,25 @@ export class ChatResponseDto {
   @ApiProperty()
   updatedAt: Date;
 
-  @ApiPropertyOptional({ type: () => forwardRef(() => MessageInChatDto) })
-  lastMessage?: MessageInChatDto;
+  @ApiPropertyOptional({ type: () => MessageInChatDto })
+  lastMessage?: MessageInChatDto | null; // 👈 Исправлено: может быть null
 
-  @ApiProperty({ description: 'Unread messages count for current user' })
+  @ApiPropertyOptional()
   unreadCount?: number;
 }
 
 export class ChatListResponseDto {
   @ApiProperty({ type: [ChatResponseDto] })
-  @IsArray()
-  @ValidateNested({ each: true })
-  @Type(() => ChatResponseDto)
   chats: ChatResponseDto[];
 
   @ApiProperty()
   total: number;
+
+  @ApiProperty()
+  limit: number;
+
+  @ApiProperty()
+  offset: number;
 }
 
 export class DeleteChatResponseDto {

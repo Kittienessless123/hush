@@ -6,14 +6,12 @@ export type DeepPartial<T> = {
   [P in keyof T]?: T[P] extends object ? DeepPartial<T[P]> : T[P];
 };
 
-// Базовый DTO с общими полями
 export class BaseDto {
   id: string;
   createdAt: Date;
   updatedAt: Date;
 }
 
-// Типы для пользовательских данных (без чувствительной инфы)
 export interface IUserPublic {
   id: string;
   username: string;

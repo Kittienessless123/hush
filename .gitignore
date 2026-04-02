@@ -73,3 +73,11 @@ EOF
 # Client (если есть)
 client/dist/
 client/node_modules/
+
+#hush-core
+hush-core/node_modules/
+hush-core/dist/
+hush-core/.env
+hush-core/logs/
+
+

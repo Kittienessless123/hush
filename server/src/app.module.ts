@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config'; // 👈 ДОБАВЬТЕ ЭТОТ ИМПОРТ
+import { ConfigModule } from '@nestjs/config';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { PrismaModule } from './prisma/prisma.module';
@@ -14,9 +14,9 @@ import { CommonModule } from './common/common.module';
 
 @Module({
   imports: [
-    ConfigModule.forRoot({  // 👈 ДОБАВЬТЕ ЭТОТ МОДУЛЬ
-      isGlobal: true,       // Делаем глобальным, чтобы не импортировать везде
-      envFilePath: '.env',  // Указываем путь к .env файлу
+    ConfigModule.forRoot({
+      isGlobal: true,
+      envFilePath: '.env',
     }),
     UsersModule,
     AuthModule,
